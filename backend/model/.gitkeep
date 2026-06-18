@@ -1,0 +1,2 @@
+# This file ensures the model directory is created and tracked in git.
+# Place the skin_model.h5 file in this directory.

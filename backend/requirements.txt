@@ -1,0 +1,6 @@
+fastapi
+uvicorn[standard]
+# tensorflow (temporarily disabled due to Python 3.14 compatibility)
+pillow
+numpy
+python-multipart
