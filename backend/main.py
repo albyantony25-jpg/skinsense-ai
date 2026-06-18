@@ -1,3 +1,25 @@
+"""
+SkinSense AI — Backend API
+===========================
+Built with FastAPI + TensorFlow MobileNetV2
+
+Endpoints:
+  GET  /health   → Health check
+  POST /predict  → Skin disease prediction from image upload
+
+Response format:
+  {
+    disease: str,
+    confidence: float,
+    description: str,
+    severity: str,
+    recommendation: str
+  }
+
+Author: Member 1 — Backend Lead
+Project: SkinSense AI (KTU Final Year Group Project)
+"""
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
