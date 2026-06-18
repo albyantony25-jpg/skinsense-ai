@@ -9,7 +9,7 @@
 - **Backend:** FastAPI
 - **Machine Learning:** TensorFlow
 - **Frontend:** React, Tailwind CSS
-- **Deployment:** Railway (Backend), Vercel (Frontend)
+- **Deployment:** Render (Backend), Vercel (Frontend)
 
 ## 👥 Team
 
