@@ -137,9 +137,12 @@ async def predict(file: UploadFile = File(...)):
     Predict skin disease from uploaded image.
     Accepts an image file and returns prediction JSON.
     """
-    # Check if the uploaded file is an image
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File provided is not an image.")
+    logger.info(f"📥 Received prediction request: {file.filename}")
+    
+    # Check if the uploaded file is an image of correct type
+    allowed_types = ["image/jpeg", "image/png", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a JPEG, PNG, or WebP image.")
     
     try:
         contents = await file.read()
@@ -147,30 +150,44 @@ async def predict(file: UploadFile = File(...)):
         if not contents:
             raise HTTPException(status_code=400, detail="Empty file provided.")
             
-        # Preprocess the image
-        img_batch = preprocess_image(contents)
+        # Validate file size (max 5MB)
+        if len(contents) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB.")
+            
+        try:
+            # Preprocess the image
+            img_batch = preprocess_image(contents)
+        except Exception as e:
+            logger.error("Preprocessing failed: %s", str(e))
+            raise HTTPException(status_code=422, detail="Could not process image. Please try a different image.")
         
-        # If model is loaded, predict using the model
-        if model is not None:
-            predictions = model.predict(img_batch)
-            
-            # Extract predicted class index and confidence
-            predicted_class_idx = int(np.argmax(predictions[0]))
-            confidence = float(np.max(predictions[0])) * 100.0
-            
-            # Safety check for unexpected model output
-            if predicted_class_idx not in DISEASE_INFO:
-                predicted_class_idx = 4 # default to Normal
-                confidence = 0.0
+        try:
+            # If model is loaded, predict using the model
+            if model is not None:
+                predictions = model.predict(img_batch)
                 
-        else:
-            # Mock response if model is not available
-            logger.info("Model not found/loaded, returning mock prediction.")
-            predicted_class_idx = 0 # Mocking Melanoma for demonstration
-            confidence = 94.32
+                # Extract predicted class index and confidence
+                predicted_class_idx = int(np.argmax(predictions[0]))
+                confidence = float(np.max(predictions[0])) * 100.0
+                
+                # Safety check for unexpected model output
+                if predicted_class_idx not in DISEASE_INFO:
+                    predicted_class_idx = 4 # default to Normal
+                    confidence = 0.0
+                    
+            else:
+                # Mock response if model is not available
+                logger.info("Model not found/loaded, returning mock prediction.")
+                predicted_class_idx = 0 # Mocking Melanoma for demonstration
+                confidence = 94.32
+        except Exception as e:
+            logger.error("Model prediction failed: %s", str(e))
+            raise HTTPException(status_code=500, detail="Prediction failed. Please try again.")
             
         # Get corresponding disease information
         info = DISEASE_INFO[predicted_class_idx]
+        
+        logger.info(f"✅ Prediction complete: {info['disease']} ({round(confidence, 2)}%)")
         
         return {
             "disease": info["disease"],
@@ -180,8 +197,8 @@ async def predict(file: UploadFile = File(...)):
             "recommendation": info["recommendation"]
         }
         
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error during prediction: %s", str(e))
         raise HTTPException(status_code=500, detail="Internal server error during prediction.")
