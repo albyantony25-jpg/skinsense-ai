@@ -110,14 +110,18 @@ async def load_model():
         logger.warning("TensorFlow is not installed. Using mock model.")
         return
 
-    if os.path.exists(full_model_path):
+    import os
+    print("Looking for model at:", os.path.abspath("../model/skin_model.h5"))
+    print("File exists:", os.path.exists("../model/skin_model.h5"))
+
+    if os.path.exists("../model/skin_model.h5"):
         try:
-            model = tf.keras.models.load_model(full_model_path)
-            logger.info("Model loaded successfully from %s", full_model_path)
+            model = tf.keras.models.load_model("../model/skin_model.h5")
+            logger.info("Model loaded successfully")
         except Exception as e:
             logger.error("Failed to load model: %s. Using mock.", str(e))
     else:
-        logger.warning("Model file not found at %s. Using mock.", full_model_path)
+        logger.warning("Model file not found. Using mock.")
 
 @app.get("/health")
 async def health_check():
