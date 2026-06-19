@@ -1,3 +1,24 @@
+"""
+SkinSense AI — Backend API
+Built with FastAPI + TensorFlow MobileNetV2
+
+Endpoints:
+  GET  /health   → Health check
+  POST /predict  → Skin disease prediction from image upload
+
+Response format:
+  {
+    disease: str,
+    confidence: float,
+    description: str,
+    severity: str,
+    recommendation: str
+  }
+
+Author: Member 1 — Backend Lead
+Project: SkinSense AI (KTU Final Year Group Project)
+"""
+
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -24,6 +45,12 @@ app = FastAPI(title="SkinSense AI Backend")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://skinsense-ai.vercel.app",
+        "*"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -140,6 +167,12 @@ async def predict(file: UploadFile = File(...)):
     # Check if the uploaded file is an image
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File provided is not an image.")
+    logger.info(f"📥 Received prediction request: {file.filename}")
+    
+    # Check if the uploaded file is an image of correct type
+    allowed_types = ["image/jpeg", "image/png", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a JPEG, PNG, or WebP image.")
     
     try:
         contents = await file.read()
@@ -168,9 +201,44 @@ async def predict(file: UploadFile = File(...)):
             logger.info("Model not found/loaded, returning mock prediction.")
             predicted_class_idx = 0 # Mocking Melanoma for demonstration
             confidence = 94.32
+        # Validate file size (max 5MB)
+        if len(contents) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB.")
+            
+        try:
+            # Preprocess the image
+            img_batch = preprocess_image(contents)
+        except Exception as e:
+            logger.error("Preprocessing failed: %s", str(e))
+            raise HTTPException(status_code=422, detail="Could not process image. Please try a different image.")
+        
+        try:
+            # If model is loaded, predict using the model
+            if model is not None:
+                predictions = model.predict(img_batch)
+                
+                # Extract predicted class index and confidence
+                predicted_class_idx = int(np.argmax(predictions[0]))
+                confidence = float(np.max(predictions[0])) * 100.0
+                
+                # Safety check for unexpected model output
+                if predicted_class_idx not in DISEASE_INFO:
+                    predicted_class_idx = 4 # default to Normal
+                    confidence = 0.0
+                    
+            else:
+                # Mock response if model is not available
+                logger.info("Model not found/loaded, returning mock prediction.")
+                predicted_class_idx = 0 # Mocking Melanoma for demonstration
+                confidence = 94.32
+        except Exception as e:
+            logger.error("Model prediction failed: %s", str(e))
+            raise HTTPException(status_code=500, detail="Prediction failed. Please try again.")
             
         # Get corresponding disease information
         info = DISEASE_INFO[predicted_class_idx]
+        
+        logger.info(f"✅ Prediction complete: {info['disease']} ({round(confidence, 2)}%)")
         
         return {
             "disease": info["disease"],
@@ -182,6 +250,8 @@ async def predict(file: UploadFile = File(...)):
         
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Error during prediction: %s", str(e))
         raise HTTPException(status_code=500, detail="Internal server error during prediction.")
