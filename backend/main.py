@@ -100,9 +100,10 @@ def download_model():
         print("⬇️ Model not found locally. Downloading from Google Drive...")
         try:
             gdown.download(
-                f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}",
-                MODEL_PATH,
-                quiet=False
+                id=GDRIVE_FILE_ID,
+                output=MODEL_PATH,
+                quiet=False,
+                fuzzy=True
             )
             print("✅ Model downloaded successfully")
         except Exception as e:
