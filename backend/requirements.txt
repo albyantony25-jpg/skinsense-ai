@@ -1,9 +1,9 @@
-fastapi
-uvicorn[standard]
-tensorflow
-pillow
-numpy
-python-multipart
-requests
-httpx
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+tensorflow==2.20.0
+pillow==10.0.0
+numpy==1.26.4
+python-multipart==0.0.6
 gdown==5.2.0
+requests==2.31.0
+httpx==0.25.2
