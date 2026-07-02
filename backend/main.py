@@ -117,7 +117,11 @@ async def startup_event():
     download_model()
     if os.path.exists(MODEL_PATH):
         try:
-            model = tf.keras.models.load_model(MODEL_PATH)
+            model = tf.keras.models.load_model(
+                MODEL_PATH,
+                compile=False,
+                safe_mode=False
+            )
             print("✅ Model loaded successfully into memory")
         except Exception as e:
             print(f"❌ Model load failed: {e}")
