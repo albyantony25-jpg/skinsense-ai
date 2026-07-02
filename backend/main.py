@@ -27,6 +27,7 @@ import os
 from PIL import Image
 import numpy as np
 import logging
+import gdown
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -89,38 +90,40 @@ DISEASE_INFO = {
     }
 }
 
-# Global variables for the model
+MODEL_PATH = "skin_model.h5"
+GDRIVE_FILE_ID = "19GtydQkO73Xnx5kyzwZZbBIymhN4am90"
+
 model = None
-MODEL_PATH = "model/skin_model.h5"
+
+def download_model():
+    if not os.path.exists(MODEL_PATH):
+        print("⬇️ Model not found locally. Downloading from Google Drive...")
+        try:
+            gdown.download(
+                f"https://drive.google.com/uc?id={GDRIVE_FILE_ID}",
+                MODEL_PATH,
+                quiet=False
+            )
+            print("✅ Model downloaded successfully")
+        except Exception as e:
+            print(f"❌ Failed to download model: {e}")
+    else:
+        print("✅ Model already exists locally, skipping download")
 
 @app.on_event("startup")
-async def load_model():
-    """
-    Load the TensorFlow model on startup.
-    Prints logs based on whether it succeeds or fails to find/load the model.
-    """
+async def startup_event():
     global model
-    
-    # Resolve the model path relative to this file
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    full_model_path = os.path.join(base_dir, MODEL_PATH)
-    
-    if tf is None:
-        logger.warning("TensorFlow is not installed. Using mock model.")
-        return
-
-    import os
-    print("Looking for model at:", os.path.abspath("../model/skin_model.h5"))
-    print("File exists:", os.path.exists("../model/skin_model.h5"))
-
-    if os.path.exists("../model/skin_model.h5"):
+    download_model()
+    if os.path.exists(MODEL_PATH):
         try:
-            model = tf.keras.models.load_model("../model/skin_model.h5")
-            logger.info("Model loaded successfully")
+            model = tf.keras.models.load_model(MODEL_PATH)
+            print("✅ Model loaded successfully into memory")
         except Exception as e:
-            logger.error("Failed to load model: %s. Using mock.", str(e))
+            print(f"❌ Model load failed: {e}")
+            model = None
     else:
-        logger.warning("Model file not found. Using mock.")
+        print("❌ Model file not found after download attempt")
+        model = None
 
 @app.get("/health")
 async def health_check():
@@ -167,9 +170,6 @@ async def predict(file: UploadFile = File(...)):
     Predict skin disease from uploaded image.
     Accepts an image file and returns prediction JSON.
     """
-    # Check if the uploaded file is an image
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File provided is not an image.")
     logger.info(f"📥 Received prediction request: {file.filename}")
     
     # Check if the uploaded file is an image of correct type
@@ -183,27 +183,6 @@ async def predict(file: UploadFile = File(...)):
         if not contents:
             raise HTTPException(status_code=400, detail="Empty file provided.")
             
-        # Preprocess the image
-        img_batch = preprocess_image(contents)
-        
-        # If model is loaded, predict using the model
-        if model is not None:
-            predictions = model.predict(img_batch)
-            
-            # Extract predicted class index and confidence
-            predicted_class_idx = int(np.argmax(predictions[0]))
-            confidence = float(np.max(predictions[0])) * 100.0
-            
-            # Safety check for unexpected model output
-            if predicted_class_idx not in DISEASE_INFO:
-                predicted_class_idx = 4 # default to Normal
-                confidence = 0.0
-                
-        else:
-            # Mock response if model is not available
-            logger.info("Model not found/loaded, returning mock prediction.")
-            predicted_class_idx = 0 # Mocking Melanoma for demonstration
-            confidence = 94.32
         # Validate file size (max 5MB)
         if len(contents) > 5 * 1024 * 1024:
             raise HTTPException(status_code=400, detail="File too large. Maximum size is 5MB.")
@@ -215,25 +194,23 @@ async def predict(file: UploadFile = File(...)):
             logger.error("Preprocessing failed: %s", str(e))
             raise HTTPException(status_code=422, detail="Could not process image. Please try a different image.")
         
+        if model is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Model not available. Please try again in a moment."
+            )
+
         try:
-            # If model is loaded, predict using the model
-            if model is not None:
-                predictions = model.predict(img_batch)
-                
-                # Extract predicted class index and confidence
-                predicted_class_idx = int(np.argmax(predictions[0]))
-                confidence = float(np.max(predictions[0])) * 100.0
-                
-                # Safety check for unexpected model output
-                if predicted_class_idx not in DISEASE_INFO:
-                    predicted_class_idx = 4 # default to Normal
-                    confidence = 0.0
-                    
-            else:
-                # Mock response if model is not available
-                logger.info("Model not found/loaded, returning mock prediction.")
-                predicted_class_idx = 0 # Mocking Melanoma for demonstration
-                confidence = 94.32
+            predictions = model.predict(img_batch)
+            
+            # Extract predicted class index and confidence
+            predicted_class_idx = int(np.argmax(predictions[0]))
+            confidence = float(np.max(predictions[0])) * 100.0
+            
+            # Safety check for unexpected model output
+            if predicted_class_idx not in DISEASE_INFO:
+                predicted_class_idx = 4 # default to Normal
+                confidence = 0.0
         except Exception as e:
             logger.error("Model prediction failed: %s", str(e))
             raise HTTPException(status_code=500, detail="Prediction failed. Please try again.")
@@ -251,8 +228,6 @@ async def predict(file: UploadFile = File(...)):
             "recommendation": info["recommendation"]
         }
         
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
     except HTTPException:
         raise
     except Exception as e:
