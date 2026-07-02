@@ -6,3 +6,4 @@ numpy
 python-multipart
 requests
 httpx
+gdown==4.7.1
