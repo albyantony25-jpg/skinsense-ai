@@ -44,7 +44,6 @@ app = FastAPI(title="SkinSense AI Backend")
 # Add CORS middleware to allow frontend connection
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
     allow_origins=[
         "http://localhost:3000",
         "http://localhost:5173",
