@@ -124,10 +124,10 @@ def download_model():
 async def startup_event():
     global model
     download_model()
-    if os.path.exists(SAVEDMODEL_PATH):
+    if os.path.exists("saved_model.pb"):
         try:
             model = tf.keras.layers.TFSMLayer(
-                SAVEDMODEL_PATH,
+                ".",
                 call_endpoint='serving_default'
             )
             print("✅ Model loaded successfully into memory")
@@ -135,7 +135,7 @@ async def startup_event():
             print(f"❌ Model load failed: {e}")
             model = None
     else:
-        print("❌ Model folder not found after download attempt")
+        print("❌ saved_model.pb not found after download attempt")
         model = None
 
 @app.get("/health")
