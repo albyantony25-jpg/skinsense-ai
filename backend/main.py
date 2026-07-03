@@ -91,7 +91,7 @@ DISEASE_INFO = {
 }
 
 MODEL_PATH = "skin_model.h5"
-GDRIVE_FILE_ID = "19GtydQkO73Xnx5kyzwZZbBIymhN4am90"
+GDRIVE_FILE_ID = "1izyY63eZew-9N70UWPmDbyhYI9tVJLh9"
 
 model = None
 
