@@ -28,6 +28,8 @@ from PIL import Image
 import numpy as np
 import logging
 import gdown
+import zipfile
+import shutil
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -90,14 +92,15 @@ DISEASE_INFO = {
     }
 }
 
-MODEL_PATH = "skin_model.h5"
+MODEL_PATH = "skin_model.zip"
+SAVEDMODEL_PATH = "skin_model_savedmodel"
 GDRIVE_FILE_ID = "1izyY63eZew-9N70UWPmDbyhYI9tVJLh9"
 
 model = None
 
 def download_model():
-    if not os.path.exists(MODEL_PATH):
-        print("⬇️ Model not found locally. Downloading from Google Drive...")
+    if not os.path.exists(SAVEDMODEL_PATH):
+        print("⬇️ Downloading model from Google Drive...")
         try:
             gdown.download(
                 id=GDRIVE_FILE_ID,
@@ -105,9 +108,13 @@ def download_model():
                 quiet=False,
                 fuzzy=True
             )
-            print("✅ Model downloaded successfully")
+            print("✅ Model zip downloaded successfully")
+            # Unzip
+            with zipfile.ZipFile(MODEL_PATH, 'r') as zip_ref:
+                zip_ref.extractall(".")
+            print("✅ Model unzipped successfully")
         except Exception as e:
-            print(f"❌ Failed to download model: {e}")
+            print(f"❌ Failed to download/unzip model: {e}")
     else:
         print("✅ Model already exists locally, skipping download")
 
@@ -115,13 +122,9 @@ def download_model():
 async def startup_event():
     global model
     download_model()
-    if os.path.exists(MODEL_PATH):
+    if os.path.exists(SAVEDMODEL_PATH):
         try:
-            model = tf.keras.models.load_model(
-                MODEL_PATH,
-                compile=False,
-                safe_mode=False
-            )
+            model = tf.keras.models.load_model(SAVEDMODEL_PATH)
             print("✅ Model loaded successfully into memory")
         except Exception as e:
             print(f"❌ Model load failed: {e}")
