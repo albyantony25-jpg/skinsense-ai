@@ -112,6 +112,9 @@ def download_model():
             with zipfile.ZipFile(MODEL_ZIP_PATH, 'r') as zip_ref:
                 zip_ref.extractall(".")
             print("✅ Model unzipped successfully")
+            print("📂 Contents after unzip:")
+            for item in os.listdir("."):
+                print(f"  - {item}")
         except Exception as e:
             print(f"❌ Failed to download/unzip model: {e}")
     else:
