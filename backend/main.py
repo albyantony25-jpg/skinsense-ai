@@ -92,9 +92,9 @@ DISEASE_INFO = {
     }
 }
 
-MODEL_PATH = "skin_model.zip"
+MODEL_ZIP_PATH = "skin_model.zip"
 SAVEDMODEL_PATH = "skin_model_savedmodel"
-GDRIVE_FILE_ID = "1izyY63eZew-9N70UWPmDbyhYI9tVJLh9"
+GDRIVE_FILE_ID = "1YngFRtWm8y64TnUzsP_pl_lXUHhlfojb"
 
 model = None
 
@@ -104,13 +104,12 @@ def download_model():
         try:
             gdown.download(
                 id=GDRIVE_FILE_ID,
-                output=MODEL_PATH,
+                output=MODEL_ZIP_PATH,
                 quiet=False,
                 fuzzy=True
             )
             print("✅ Model zip downloaded successfully")
-            # Unzip
-            with zipfile.ZipFile(MODEL_PATH, 'r') as zip_ref:
+            with zipfile.ZipFile(MODEL_ZIP_PATH, 'r') as zip_ref:
                 zip_ref.extractall(".")
             print("✅ Model unzipped successfully")
         except Exception as e:
@@ -124,13 +123,16 @@ async def startup_event():
     download_model()
     if os.path.exists(SAVEDMODEL_PATH):
         try:
-            model = tf.keras.models.load_model(SAVEDMODEL_PATH)
+            model = tf.keras.layers.TFSMLayer(
+                SAVEDMODEL_PATH,
+                call_endpoint='serving_default'
+            )
             print("✅ Model loaded successfully into memory")
         except Exception as e:
             print(f"❌ Model load failed: {e}")
             model = None
     else:
-        print("❌ Model file not found after download attempt")
+        print("❌ Model folder not found after download attempt")
         model = None
 
 @app.get("/health")
@@ -209,11 +211,10 @@ async def predict(file: UploadFile = File(...)):
             )
 
         try:
-            predictions = model.predict(img_batch)
-            
-            # Extract predicted class index and confidence
-            predicted_class_idx = int(np.argmax(predictions[0]))
-            confidence = float(np.max(predictions[0])) * 100.0
+            output = model(img_batch, training=False)
+            predictions = list(output.values())[0].numpy()
+            predicted_class_idx = int(tf.argmax(predictions[0]).numpy())
+            confidence = float(tf.reduce_max(predictions[0]).numpy()) * 100
             
             # Safety check for unexpected model output
             if predicted_class_idx not in DISEASE_INFO:
