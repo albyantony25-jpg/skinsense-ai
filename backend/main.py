@@ -61,31 +61,31 @@ app.add_middleware(
 # Hardcoded disease info mapping
 DISEASE_INFO = {
     0: {
-        "disease": "Melanoma",
+        "disease": "melanoma",
         "description": "A serious form of skin cancer that develops in melanocytes.",
         "severity": "High",
         "recommendation": "Seek immediate dermatologist consultation."
     },
     1: {
-        "disease": "Nevus",
+        "disease": "nevus",
         "description": "A common benign mole that is usually harmless.",
         "severity": "Low",
         "recommendation": "Monitor for changes in size, shape, or color."
     },
     2: {
-        "disease": "Basal Cell Carcinoma",
+        "disease": "bcc",
         "description": "The most common type of skin cancer, slow-growing.",
         "severity": "Moderate",
         "recommendation": "Schedule a dermatologist visit for evaluation."
     },
     3: {
-        "disease": "Eczema",
+        "disease": "eczema",
         "description": "A chronic skin condition causing inflammation and itching.",
         "severity": "Moderate",
         "recommendation": "Use prescribed moisturizers and avoid known triggers."
     },
     4: {
-        "disease": "Normal",
+        "disease": "normal",
         "description": "No significant skin condition detected.",
         "severity": "None",
         "recommendation": "Maintain regular skincare routine."
