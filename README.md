@@ -1,37 +1,70 @@
 # SkinSense AI 🩺
+> AI-powered skin disease classifier built as a KTU final year group project.
 
-> **Status:** In development 🚧
+## 🚀 Live Demo
+- **Frontend:** https://skinsense-ai-eight.vercel.app
+- **Backend API:** https://skinsense-ai-93p9.onrender.com
+- **API Docs:** https://skinsense-ai-93p9.onrender.com/docs
 
-**SkinSense AI** is an AI-powered skin disease classifier. Users can upload an image of a skin condition and receive a predicted diagnosis, powered by a **MobileNetV2** transfer learning model.
+## 📌 Status
+✅ **Complete** — Fully deployed and working end to end.
 
-## 🛠 Tech Stack
+## 🧠 What it does
+Users upload a close-up photo of a skin condition → FastAPI 
+backend preprocesses the image → MobileNetV2 model predicts 
+the disease → React frontend displays the result with 
+confidence score, description, severity, and recommendation.
 
-- **Backend:** FastAPI
-- **Machine Learning:** TensorFlow
-- **Frontend:** React, Tailwind CSS
-- **Deployment:** Render (Backend), Vercel (Frontend)
+## 🎯 Supported Conditions
+| Disease | Severity |
+|---|---|
+| Melanoma | High |
+| Nevus (Benign Mole) | Low |
+| Basal Cell Carcinoma | Moderate |
+| Eczema | Moderate |
+| Normal | None |
+
+## 🛠️ Tech Stack
+| Layer | Technology |
+|---|---|
+| Backend | Python, FastAPI, TensorFlow, Pillow, Uvicorn |
+| ML Model | MobileNetV2 transfer learning (~81% test accuracy) |
+| Frontend | React, Tailwind CSS, Vite |
+| Deployment | Render (backend), Vercel (frontend) |
+| Version Control | GitHub |
+
+## 📁 Project Structure
+skinsense-ai/
+├── backend/     → FastAPI backend + model integration
+├── frontend/    → React + Tailwind CSS UI
+├── model/       → MobileNetV2 training notebooks
+├── docs/        → Deployment documentation
+└── README.md
 
 ## 👥 Team
-
-Our project is being developed by a dedicated team of 4 members covering:
-- **Backend Engineering**
-- **Machine Learning (ML)**
-- **Frontend Development**
-- **DevOps**
+| Member | Role |
+|---|---|
+| Alby A Jose | Backend Lead — FastAPI, model integration, deployment |
+| Anirudh RS | DevOps — Render/Vercel deployment, configuration |
+| Felix Aby Thomas | Frontend — React UI, Tailwind CSS |
+| B Ananthakrishnan | ML Engineer — MobileNetV2 training, evaluation |
 
 ## 🔌 API Reference
-
-### `POST /predict`
-
-Accepts an image file upload and returns a comprehensive diagnosis.
-
-**Example Response:**
-```json
+### POST /predict
+Accepts an image file, returns prediction JSON.
+Response:
 {
-  "disease": "Melanoma",
-  "confidence": 94.32,
-  "description": "A serious form of skin cancer that develops in melanocytes.",
-  "severity": "High",
-  "recommendation": "Seek immediate dermatologist consultation."
+  "disease": "eczema",
+  "confidence": 48.02,
+  "description": "A chronic skin condition...",
+  "severity": "Moderate",
+  "recommendation": "Use prescribed moisturizers..."
 }
-```
+
+### GET /health
+Returns { "status": "ok" }
+
+## ⚠️ Disclaimer
+SkinSense AI is for educational purposes only. 
+Not a substitute for professional medical diagnosis or advice.
+Always consult a licensed dermatologist.
