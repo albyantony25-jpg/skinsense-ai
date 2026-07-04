@@ -108,7 +108,7 @@ export default function App() {
     formData.append('file', selectedFile);
 
     try {
-      const response = await fetch('http://localhost:8000/predict', {
+      const response = await fetch('https://skinsense-ai-93p9.onrender.com/predict', {
         method: 'POST',
         body: formData,
       });
@@ -119,7 +119,7 @@ export default function App() {
 
       const data = await response.json();
       // Verify response structure and fall back if incomplete
-      if (data && data.disease && data.confidence !== undefined && data.all_probs) {
+      if (data && data.disease && data.confidence !== undefined) {
         setResult(data);
       } else {
         throw new Error('API returned malformed data structure');
