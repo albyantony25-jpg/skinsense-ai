@@ -217,7 +217,7 @@ async def predict(file: UploadFile = File(...)):
             output = model(img_batch, training=False)
             predictions = list(output.values())[0].numpy()
             predicted_class_idx = int(tf.argmax(predictions[0]).numpy())
-            confidence = round(float(tf.reduce_max(predictions[0]).numpy()) * 100, 2)
+            confidence = round(float(tf.reduce_max(predictions[0]).numpy()), 2)
             
             # Safety check for unexpected model output
             if predicted_class_idx not in DISEASE_INFO:
