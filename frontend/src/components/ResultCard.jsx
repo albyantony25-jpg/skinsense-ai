@@ -46,6 +46,8 @@ export default function ResultCard({ result }) {
   const severityInfo = severityStyles[severity] || severityStyles.none;
   const displayName = diseaseDisplayNames[disease] || disease;
 
+  const numericConfidence = parseFloat(confidence) || 0;
+
   // Convert all probabilities object into a sorted array
   const sortedPredictions = all_probs
     ? Object.entries(all_probs)
@@ -76,12 +78,12 @@ export default function ResultCard({ result }) {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium text-slate-500">Analysis Confidence</span>
-          <span className="font-bold text-slate-700">{confidence.toFixed(2)}%</span>
+          <span className="font-bold text-slate-700">{numericConfidence.toFixed(2)}%</span>
         </div>
         <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
           <div
             className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
-            style={{ width: animate ? `${confidence}%` : '0%' }}
+            style={{ width: animate ? `${numericConfidence}%` : '0%' }}
           />
         </div>
       </div>
