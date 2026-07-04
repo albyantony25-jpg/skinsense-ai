@@ -89,7 +89,7 @@ export default function App() {
     const details = DISEASE_DETAILS[selectedDisease];
     return {
       disease: selectedDisease,
-      confidence: topConfidence,
+      confidence: parseFloat((topConfidence * 100).toFixed(2)),
       description: details.description,
       severity: details.severity,
       recommendation: details.recommendation,
