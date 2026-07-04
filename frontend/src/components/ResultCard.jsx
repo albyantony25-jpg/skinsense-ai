@@ -76,12 +76,12 @@ export default function ResultCard({ result }) {
       <div className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium text-slate-500">Analysis Confidence</span>
-          <span className="font-bold text-slate-700">{(confidence * 100).toFixed(1)}%</span>
+          <span className="font-bold text-slate-700">{confidence.toFixed(1)}%</span>
         </div>
         <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
           <div
             className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
-            style={{ width: animate ? `${(confidence * 100).toFixed(1)}%` : '0%' }}
+            style={{ width: animate ? `${confidence.toFixed(1)}%` : '0%' }}
           />
         </div>
       </div>
