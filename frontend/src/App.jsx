@@ -1,105 +1,189 @@
-import React, { useState } from 'react';
-import Navbar from './components/Navbar';
-import ImageUpload from './components/ImageUpload';
-import ResultCard from './components/ResultCard';
-import { ShieldAlert, RefreshCw, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Toaster, toast } from 'react-hot-toast';
+import { motion, useScroll, useSpring } from 'framer-motion';
 
+import Navbar from './components/layout/Navbar';
+import Footer from './components/layout/Footer';
+import ParticleBackground from './components/ui/ParticleBackground';
+import Hero from './components/sections/Hero';
+import TrustSection from './components/sections/TrustSection';
+import HowItWorks from './components/sections/HowItWorks';
+import UploadSection from './components/sections/UploadSection';
+import ResultSection from './components/sections/ResultSection';
+import ExplainableAI from './components/sections/ExplainableAI';
+import FeaturesSection from './components/sections/FeaturesSection';
+import StatsSection from './components/sections/StatsSection';
+import FAQ from './components/sections/FAQ';
+import About from './components/sections/About';
+import ScanHistory from './components/sections/ScanHistory';
+
+import './index.css';
+import './App.css';
+
+/* ── Disease metadata ──────────────────────── */
 const DISEASE_DETAILS = {
   melanoma: {
     disease: 'melanoma',
-    description: 'A serious form of skin cancer that begins in melanocytes.',
+    description: 'A serious form of skin cancer that begins in melanocytes (pigment-producing cells). It is the most dangerous type of skin cancer and can spread to other parts of the body.',
     severity: 'high',
-    recommendation: 'Seek dermatologist consultation immediately.'
+    recommendation: 'Seek immediate dermatologist consultation. Early detection is critical for successful treatment.',
+    symptoms: ['Asymmetric mole', 'Irregular border', 'Multiple colors', 'Diameter > 6mm', 'Evolving shape or size'],
+    medicines: ['Immunotherapy (Pembrolizumab)', 'Targeted therapy (Dabrafenib)', 'Chemotherapy'],
+    visitDoctor: true,
   },
   nevus: {
     disease: 'nevus',
-    description: 'A common benign mole formed by melanocyte clusters.',
+    description: 'A common benign (non-cancerous) mole formed by clusters of melanocytes. Most nevus are harmless but should be monitored for changes.',
     severity: 'low',
-    recommendation: 'Monitor for changes in size, shape, or color annually.'
+    recommendation: 'Monitor for changes in size, shape, or color. Schedule annual dermatology check-ups.',
+    symptoms: ['Uniform color', 'Defined border', 'Stable size', 'Small diameter', 'No itching or bleeding'],
+    medicines: ['No medication required', 'Sunscreen SPF 50+', 'Vitamin D supplement'],
+    visitDoctor: false,
   },
   bcc: {
     disease: 'bcc',
-    description: 'The most common skin cancer, found in sun-exposed areas.',
+    description: 'Basal Cell Carcinoma — the most common form of skin cancer. Develops in the basal cells and is usually found in sun-exposed areas. Rarely spreads but requires treatment.',
     severity: 'moderate',
-    recommendation: 'Schedule a dermatology appointment within 2 weeks.'
+    recommendation: 'Schedule a dermatology appointment within 2 weeks for proper biopsy and treatment planning.',
+    symptoms: ['Pearly or waxy bump', 'Flat flesh-colored lesion', 'Bleeding or scabbing sore', 'Pink growth with raised edges'],
+    medicines: ['Topical chemotherapy (5-FU)', 'Photodynamic therapy', 'Surgical excision'],
+    visitDoctor: true,
   },
   eczema: {
     disease: 'eczema',
-    description: 'A chronic inflammatory condition causing red, itchy skin.',
+    description: 'A chronic inflammatory skin condition causing red, itchy, and inflamed patches. Often triggered by environmental factors, allergens, or stress.',
     severity: 'moderate',
-    recommendation: 'Use fragrance-free moisturizers and consult a dermatologist.'
+    recommendation: 'Use fragrance-free moisturizers, identify and avoid triggers. Consult a dermatologist for prescription treatment if severe.',
+    symptoms: ['Red, inflamed skin', 'Intense itching', 'Dry, scaly patches', 'Skin thickening', 'Fluid-filled blisters'],
+    medicines: ['Topical corticosteroids', 'Antihistamines (Cetirizine)', 'Moisturizing creams (CeraVe)', 'Dupilumab (severe cases)'],
+    visitDoctor: false,
   },
   normal: {
     disease: 'normal',
-    description: 'No significant skin condition detected.',
+    description: 'No significant skin condition detected in the uploaded image. Your skin appears healthy based on our AI analysis.',
     severity: 'none',
-    recommendation: 'Continue regular skincare and apply SPF 30+ daily.'
-  }
+    recommendation: 'Continue regular skincare routine. Apply SPF 30+ sunscreen daily and stay hydrated.',
+    symptoms: ['No visible lesions', 'Uniform skin tone', 'Normal texture', 'No inflammation'],
+    medicines: ['Sunscreen SPF 30+', 'Gentle cleanser', 'Daily moisturizer'],
+    visitDoctor: false,
+  },
 };
 
 export default function App() {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [selectedFile, setSelectedFile]  = useState(null);
+  const [previewUrl,   setPreviewUrl]    = useState(null);
+  const [isLoading,    setIsLoading]     = useState(false);
+  const [result,       setResult]        = useState(null);
+  const [isDemoMode,   setIsDemoMode]    = useState(false);
 
+  // Upgrade Level 2 States
+  const [theme, setTheme] = useState(() => localStorage.getItem('skinsense_theme') || 'dark');
+  const [scanHistory, setScanHistory] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('skinsense_history')) || [];
+    } catch {
+      return [];
+    }
+  });
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  const resultRef  = useRef(null);
+  const uploadRef  = useRef(null);
+
+  /* Scroll progress bar */
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+
+  /* Set HTML attributes on theme change */
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('skinsense_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(t => t === 'dark' ? 'light' : 'dark');
+  };
+
+  /* ── Handlers ───────────────────── */
   const handleFileSelect = (file) => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
-    setResult(null); // Clear previous results
+    setResult(null);
     setIsDemoMode(false);
   };
 
   const handleRemove = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedFile(null);
     setPreviewUrl(null);
     setResult(null);
     setIsDemoMode(false);
   };
 
-  const generateMockResult = () => {
-    const keys = Object.keys(DISEASE_DETAILS);
-    const selectedDisease = keys[Math.floor(Math.random() * keys.length)];
-    const topConfidence = parseFloat((0.65 + Math.random() * 0.30).toFixed(4)); // 65% to 95%
-    
-    // Distribute remaining percentage among other 4 diseases
-    const remaining = 1.0 - topConfidence;
-    const others = keys.filter((k) => k !== selectedDisease);
-    const weights = others.map(() => Math.random());
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
-    
-    const all_probs = {};
-    all_probs[selectedDisease] = topConfidence;
-    
-    let sumOthers = 0;
-    others.forEach((key, index) => {
-      const p = parseFloat(((weights[index] / totalWeight) * remaining).toFixed(4));
-      all_probs[key] = p;
-      sumOthers += p;
-    });
-    
-    // Adjust rounding difference
-    const diff = parseFloat((1.0 - (topConfidence + sumOthers)).toFixed(4));
-    all_probs[others[0]] = parseFloat((all_probs[others[0]] + diff).toFixed(4));
-
-    const details = DISEASE_DETAILS[selectedDisease];
-    return {
-      disease: selectedDisease,
-      confidence: topConfidence,
-      description: details.description,
-      severity: details.severity,
-      recommendation: details.recommendation,
-      all_probs
+  const saveScanToHistory = (disease, confidence, severity) => {
+    const newRecord = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      disease,
+      diseaseName: DISEASE_DETAILS[disease] ? (disease === 'melanoma' ? 'Melanoma' : disease === 'nevus' ? 'Nevus (Benign Mole)' : disease === 'bcc' ? 'Basal Cell Carcinoma' : disease === 'eczema' ? 'Eczema' : 'Normal Skin') : disease,
+      confidence,
+      severity,
     };
+    const updated = [newRecord, ...scanHistory];
+    setScanHistory(updated);
+    localStorage.setItem('skinsense_history', JSON.stringify(updated));
+  };
+
+  const clearHistory = () => {
+    setScanHistory([]);
+    localStorage.setItem('skinsense_history', JSON.stringify([]));
+    toast.success('History cleared');
+  };
+
+  const deleteRecord = (id) => {
+    const updated = scanHistory.filter(h => h.id !== id);
+    setScanHistory(updated);
+    localStorage.setItem('skinsense_history', JSON.stringify(updated));
+    toast.success('Record removed');
+  };
+
+  const handleSelectRecord = (record) => {
+    const details = DISEASE_DETAILS[record.disease] || DISEASE_DETAILS.normal;
+    // Reconstruct all_probs with the selected disease as high score
+    const probs = {};
+    Object.keys(DISEASE_DETAILS).forEach(k => {
+      probs[k] = k === record.disease ? record.confidence : (1 - record.confidence) / 4;
+    });
+    setResult({
+      ...details,
+      confidence: record.confidence,
+      all_probs: probs
+    });
+  };
+
+  const generateMockResult = () => {
+    const keys   = Object.keys(DISEASE_DETAILS);
+    const picked = keys[Math.floor(Math.random() * keys.length)];
+    const top    = parseFloat((0.65 + Math.random() * 0.30).toFixed(4));
+    const rest   = 1.0 - top;
+    const others = keys.filter(k => k !== picked);
+    const w      = others.map(() => Math.random());
+    const wSum   = w.reduce((a, b) => a + b, 0);
+    const probs  = { [picked]: top };
+    let cumOther = 0;
+    others.forEach((k, i) => {
+      const p = parseFloat(((w[i] / wSum) * rest).toFixed(4));
+      probs[k] = p;
+      cumOther += p;
+    });
+    const diff = parseFloat((1.0 - (top + cumOther)).toFixed(4));
+    probs[others[0]] = parseFloat((probs[others[0]] + diff).toFixed(4));
+    return { ...DISEASE_DETAILS[picked], confidence: top, all_probs: probs };
   };
 
   const handleAnalyze = async () => {
     if (!selectedFile) return;
-
     setIsLoading(true);
     setResult(null);
     setIsDemoMode(false);
@@ -108,93 +192,109 @@ export default function App() {
     formData.append('file', selectedFile);
 
     try {
-      const response = await fetch('https://skinsense-ai-93p9.onrender.com/predict', {
-        method: 'POST',
-        body: formData,
+      const res = await fetch('https://skinsense-ai-93p9.onrender.com/predict', {
+        method: 'POST', body: formData,
       });
-
-      if (!response.ok) {
-        throw new Error('API server returned error status');
-      }
-
-      const data = await response.json();
-      // Verify response structure and fall back if incomplete
-      if (data && data.disease && data.confidence !== undefined) {
-        setResult(data);
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      if (data?.disease && data.confidence !== undefined) {
+        /* Merge rich details */
+        const enriched = { ...DISEASE_DETAILS[data.disease], ...data };
+        setResult(enriched);
+        toast.success('Analysis complete!', { style: { background: 'var(--bg2)', color: 'var(--text)', border: '1px solid rgba(61,217,235,0.3)' } });
+        
+        // Save scan to history
+        saveScanToHistory(data.disease, data.confidence, enriched.severity);
       } else {
-        throw new Error('API returned malformed data structure');
+        throw new Error('Malformed response');
       }
     } catch (err) {
-      console.warn('Backend API connection failed, silently falling back to mock results:', err);
-      
-      // Simulate network delay for mock prediction to make it feel natural
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      const mockData = generateMockResult();
-      setResult(mockData);
+      console.warn('API failed, using mock:', err);
+      await new Promise(r => setTimeout(r, 2000));
+      const mockResult = generateMockResult();
+      setResult(mockResult);
       setIsDemoMode(true);
+      toast('Demo mode — backend offline', { icon: '⚡', style: { background: 'var(--bg2)', color: '#FFB547', border: '1px solid rgba(255,181,71,0.3)' } });
+      
+      // Save scan to history
+      saveScanToHistory(mockResult.disease, mockResult.confidence, mockResult.severity);
     } finally {
       setIsLoading(false);
     }
   };
 
+  /* Scroll to result when ready */
+  useEffect(() => {
+    if (result && resultRef.current) {
+      setTimeout(() => resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+    }
+  }, [result]);
+
+  const scrollToUpload = () => uploadRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-800">
-      <Navbar />
+    <div style={{ position: 'relative', minHeight: '100vh', background: 'var(--bg)' }}>
+      {/* Background elements */}
+      <ParticleBackground />
+      <div className="noise" />
 
-      <main className="flex-grow max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 md:py-12 space-y-8">
-        {/* Banner/Header */}
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
-            Instant Skin Disease Classifier
-          </h1>
-          <p className="text-slate-500 text-sm sm:text-base leading-relaxed">
-            Upload close-up photos of skin lesions, rashes, or moles. Our deep learning model analyzes visual patterns to provide risk indicators.
-          </p>
-        </div>
+      {/* Scroll progress */}
+      <motion.div className="scroll-bar" style={{ scaleX, height: '3px', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 999 }} />
 
-        {/* Demo Mode Notice (Subtle alert if API failed and fallback activated) */}
-        {isDemoMode && (
-          <div className="max-w-xl mx-auto bg-amber-550/5 border border-amber-200/50 rounded-xl p-3.5 flex items-center space-x-3 text-amber-800 text-xs sm:text-sm animate-fade-in shadow-sm">
-            <HelpCircle className="h-5 w-5 text-amber-600 flex-shrink-0" />
-            <div className="flex-grow">
-              <span className="font-semibold text-amber-700">Offline Simulation Mode:</span> The local classification server (http://localhost:8000) was unreachable. Displaying a simulated, mathematically accurate diagnostic result.
-            </div>
-          </div>
-        )}
+      {/* Toast */}
+      <Toaster position="top-right" />
 
-        {/* Workspace Layout */}
-        <div className="flex flex-col items-center justify-center gap-8 lg:flex-row lg:items-start lg:justify-center">
-          <div className="w-full max-w-xl">
-            <ImageUpload
+      {/* Slide-out Scan History */}
+      <ScanHistory
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        history={scanHistory}
+        onClearAll={clearHistory}
+        onSelectRecord={handleSelectRecord}
+        onDeleteRecord={deleteRecord}
+      />
+
+      {/* Layout wrapper */}
+      <div style={{ position: 'relative', zIndex: 2 }}>
+        <Navbar
+          onUploadClick={scrollToUpload}
+          theme={theme}
+          toggleTheme={toggleTheme}
+          onHistoryClick={() => setIsHistoryOpen(true)}
+        />
+
+        <main>
+          <Hero onUploadClick={scrollToUpload} />
+          <TrustSection />
+          <HowItWorks />
+
+          <div ref={uploadRef}>
+            <UploadSection
               selectedFile={selectedFile}
               previewUrl={previewUrl}
+              isLoading={isLoading}
               onFileSelect={handleFileSelect}
               onRemove={handleRemove}
               onAnalyze={handleAnalyze}
-              isLoading={isLoading}
+              isDemoMode={isDemoMode}
             />
           </div>
 
           {result && (
-            <div className="w-full max-w-xl">
-              <ResultCard result={result} />
+            <div ref={resultRef}>
+              <ResultSection result={result} imageUrl={previewUrl} />
+              <ExplainableAI result={result} />
             </div>
           )}
-        </div>
-      </main>
 
-      {/* Footer & Medical Disclaimer */}
-      <footer className="bg-white border-t border-slate-100 py-6 mt-12">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center space-y-2">
-          <p className="text-slate-400 text-xs sm:text-sm leading-relaxed max-w-3xl mx-auto">
-            <span className="font-semibold text-slate-500">Disclaimer:</span> SkinSense is an AI demo tool for educational purposes only. Not a substitute for professional medical diagnosis, treatment, or advice. Always consult a licensed dermatologist or medical professional.
-          </p>
-          <p className="text-slate-300 text-xs">
-            &copy; {new Date().getFullYear()} SkinSense AI. All rights reserved.
-          </p>
-        </div>
-      </footer>
+          <FeaturesSection />
+          <StatsSection />
+          <FAQ />
+          <About />
+        </main>
+
+        <Footer onUploadClick={scrollToUpload} />
+      </div>
     </div>
   );
 }
