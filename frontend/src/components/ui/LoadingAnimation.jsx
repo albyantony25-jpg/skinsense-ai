@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain } from 'lucide-react';
 
 const TEXTS = [
-  'Scanning image pixels…',
-  'Analyzing pigmentation variation…',
-  'Isolating lesion contours…',
-  'Feeding feature maps to ResNet model…',
-  'Generating soft-max class distributions…',
-  'Assembling final report…',
+  'Loading AI model…',
+  'Detecting skin lesion…',
+  'Extracting visual features…',
+  'Running deep learning inference…',
+  'Generating class probabilities…',
+  'Assembling your report…',
 ];
 
 export default function LoadingAnimation({ isLoading }) {
@@ -18,12 +17,12 @@ export default function LoadingAnimation({ isLoading }) {
 
   useEffect(() => {
     if (!isLoading) { setIdx(0); setProgress(0); return; }
-    const textTimer = setInterval(() => setIdx(i => (i + 1) % TEXTS.length), 1200);
-    const progTimer = setInterval(() => setProgress(p => Math.min(p + Math.random() * 9, 95)), 300);
+    const textTimer = setInterval(() => setIdx(i => (i + 1) % TEXTS.length), 1400);
+    const progTimer = setInterval(() => setProgress(p => Math.min(p + Math.random() * 8, 95)), 280);
     return () => { clearInterval(textTimer); clearInterval(progTimer); };
   }, [isLoading]);
 
-  // Canvas Neural Network Animation
+  /* ── Canvas Neural Network Animation ── */
   useEffect(() => {
     if (!isLoading || !canvasRef.current) return;
     const canvas = canvasRef.current;
@@ -31,57 +30,63 @@ export default function LoadingAnimation({ isLoading }) {
     let animId;
     let frame = 0;
 
-    // Define simple node coordinates: 3 layers
+    // 3-layer network: input → hidden → output
     const layers = [
-      [ {x: 30, y: 30}, {x: 30, y: 70}, {x: 30, y: 110} ], // Input
-      [ {x: 110, y: 20}, {x: 110, y: 50}, {x: 110, y: 80}, {x: 110, y: 120} ], // Hidden
-      [ {x: 190, y: 45}, {x: 190, y: 95} ] // Output
+      [{ x: 35, y: 25 }, { x: 35, y: 65 }, { x: 35, y: 105 }],
+      [{ x: 110, y: 15 }, { x: 110, y: 48 }, { x: 110, y: 81 }, { x: 110, y: 115 }],
+      [{ x: 185, y: 45 }, { x: 185, y: 85 }],
     ];
 
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       frame++;
 
-      // Draw Connections (Synapses)
+      // Draw connections (synapses)
       for (let l = 0; l < layers.length - 1; l++) {
         const curr = layers[l];
         const next = layers[l + 1];
         for (let i = 0; i < curr.length; i++) {
           for (let j = 0; j < next.length; j++) {
+            // Static synapse line
             ctx.beginPath();
             ctx.moveTo(curr[i].x, curr[i].y);
             ctx.lineTo(next[j].x, next[j].y);
-            ctx.strokeStyle = 'rgba(61, 217, 235, 0.12)';
+            ctx.strokeStyle = 'rgba(61,217,235,0.12)';
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // Animated light pulses passing along synapses
-            const progress = (frame * 0.02 + (i + j) * 0.25) % 1;
-            const px = curr[i].x + (next[j].x - curr[i].x) * progress;
-            const py = curr[i].y + (next[j].y - curr[i].y) * progress;
+            // Animated light pulse along synapse
+            const t = (frame * 0.018 + (i * 0.3 + j * 0.15)) % 1;
+            const px = curr[i].x + (next[j].x - curr[i].x) * t;
+            const py = curr[i].y + (next[j].y - curr[i].y) * t;
             ctx.beginPath();
-            ctx.circle(px, py, 2);
-            ctx.fillStyle = 'var(--primary)';
+            // ✅ FIXED: ctx.arc() not ctx.circle()
+            ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = l === 0 ? '#3DD9EB' : '#7C5CFC';
             ctx.fill();
           }
         }
       }
 
-      // Draw Nodes
+      // Draw nodes
       layers.forEach((layer, l) => {
-        layer.forEach((node) => {
-          ctx.beginPath();
-          ctx.circle(node.x, node.y, 5);
-          ctx.fillStyle = l === 2 ? 'var(--secondary)' : 'var(--primary)';
-          ctx.fill();
+        layer.forEach(node => {
+          const pulse = Math.abs(Math.sin(frame * 0.08 + node.y * 0.05)) * 4;
+          const nodeColor = l === 2 ? '#00FFA3' : l === 1 ? '#7C5CFC' : '#3DD9EB';
+          const glowColor = l === 2 ? 'rgba(0,255,163,0.25)' : l === 1 ? 'rgba(124,92,252,0.25)' : 'rgba(61,217,235,0.25)';
 
-          // Node glow pulse
-          const pulse = Math.sin(frame * 0.15 + node.y) * 3;
+          // Glow ring
           ctx.beginPath();
-          ctx.circle(node.x, node.y, 5 + Math.abs(pulse));
-          ctx.strokeStyle = l === 2 ? 'rgba(0, 255, 163, 0.2)' : 'rgba(61, 217, 235, 0.2)';
-          ctx.lineWidth = 1;
+          ctx.arc(node.x, node.y, 6 + pulse, 0, Math.PI * 2);
+          ctx.strokeStyle = glowColor;
+          ctx.lineWidth = 1.5;
           ctx.stroke();
+
+          // Solid node
+          ctx.beginPath();
+          ctx.arc(node.x, node.y, 5, 0, Math.PI * 2);
+          ctx.fillStyle = nodeColor;
+          ctx.fill();
         });
       });
 
@@ -105,44 +110,48 @@ export default function LoadingAnimation({ isLoading }) {
         background: 'var(--bg2)',
         borderRadius: 20,
         border: '1px solid var(--border)',
+        boxShadow: '0 0 40px rgba(61,217,235,0.05)',
       }}
     >
-      {/* Visual Neural Net Canvas */}
+      {/* Neural Net Canvas */}
       <div style={{ position: 'relative', width: 220, height: 140 }}>
         <canvas ref={canvasRef} width="220" height="140" style={{ display: 'block' }} />
-        
-        {/* Overlay scanner effect */}
+        {/* Vignette overlay */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'radial-gradient(circle, transparent 40%, var(--bg2) 90%)',
+          background: 'radial-gradient(ellipse at center, transparent 50%, var(--bg2) 95%)',
           pointerEvents: 'none',
         }} />
       </div>
 
-      {/* Changing text messages */}
+      {/* Animated status text */}
       <AnimatePresence mode="wait">
         <motion.p key={idx}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3 }}
-          style={{ color: 'var(--primary)', fontWeight: 600, fontSize: 13, minHeight: 20, textAlign: 'center' }}
+          style={{
+            color: 'var(--primary)', fontWeight: 600, fontSize: 13,
+            minHeight: 20, textAlign: 'center',
+          }}
         >
           {TEXTS[idx]}
         </motion.p>
       </AnimatePresence>
 
-      {/* Progress slider bar */}
-      <div style={{ width: '100%', maxWidth: 280 }}>
+      {/* Progress bar */}
+      <div style={{ width: '100%', maxWidth: 300 }}>
         <div className="prog-track">
           <motion.div
             className="prog-fill"
-            style={{ width: `${progress}%`, background: 'linear-gradient(90deg, var(--primary), var(--secondary))' }}
+            style={{ width: `${progress}%`, background: 'linear-gradient(90deg, var(--primary), var(--secondary), var(--accent))' }}
           />
         </div>
-        <p style={{ textAlign: 'right', fontSize: 11, color: 'var(--muted)', marginTop: 6 }}>
-          {Math.round(progress)}%
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+          <span style={{ fontSize: 11, color: 'var(--muted)' }}>Analyzing…</span>
+          <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 700 }}>{Math.round(progress)}%</span>
+        </div>
       </div>
     </motion.div>
   );

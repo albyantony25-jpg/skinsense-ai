@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
-import { Upload, FileImage, Trash2, ShieldAlert, Scan, Sparkles, CircleAlert } from 'lucide-react';
+import { Upload, FileImage, Trash2, ShieldAlert, Scan, Sparkles, CircleAlert, Lock } from 'lucide-react';
 import LoadingAnimation from '../ui/LoadingAnimation';
 
 export default function UploadSection({
@@ -28,6 +28,7 @@ export default function UploadSection({
   return (
     <section id="upload" style={{ padding: '80px 24px' }}>
       <div style={{ maxWidth: 760, margin: '0 auto' }}>
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -43,12 +44,12 @@ export default function UploadSection({
           <h2 style={{ fontSize: 'clamp(1.8rem, 3vw, 2.8rem)', fontWeight: 800, marginTop: 16, letterSpacing: '-0.02em' }}>
             Upload &amp; <span className="text-grad">Analyze</span>
           </h2>
-          <p style={{ color: '#94A3B8', marginTop: 12, fontSize: 15 }}>
-            Drop a clear, well-lit close-up image of the affected skin area
+          <p style={{ color: 'var(--muted)', marginTop: 12, fontSize: 15 }}>
+            Drop a clear, well-lit close-up photo of the affected skin area for instant AI analysis.
           </p>
         </motion.div>
 
-        {/* Demo mode warning */}
+        {/* Offline demo warning */}
         <AnimatePresence>
           {isDemoMode && (
             <motion.div
@@ -63,13 +64,13 @@ export default function UploadSection({
             >
               <CircleAlert size={16} style={{ color: '#FFB547', flexShrink: 0 }} />
               <p style={{ fontSize: 13, color: '#FFB547' }}>
-                <b>Offline Demo Mode</b> — API unreachable. Showing simulated prediction.
+                <b>Offline Demo Mode</b> — API unreachable. Showing simulated prediction based on local model data.
               </p>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Main card */}
+        {/* Card */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -78,7 +79,7 @@ export default function UploadSection({
           className="glass"
           style={{ padding: 32 }}
         >
-          {/* Error */}
+          {/* File error */}
           {rejected && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
@@ -90,39 +91,54 @@ export default function UploadSection({
             </div>
           )}
 
-          {/* Drop zone */}
+          {/* Drop zone or preview */}
           {!previewUrl ? (
             <div
               {...getRootProps()}
               className={`upload-zone${isDragActive ? ' drag-active' : ''}`}
-              style={{ padding: '52px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}
+              style={{ padding: '56px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}
             >
               <input {...getInputProps()} />
+
               <motion.div
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                animate={isDragActive
+                  ? { scale: [1, 1.1, 1], rotate: [0, -5, 5, 0] }
+                  : { y: [0, -8, 0] }
+                }
+                transition={{ duration: isDragActive ? 0.4 : 3, repeat: Infinity, ease: 'easeInOut' }}
                 style={{
-                  width: 72, height: 72, borderRadius: 20,
+                  width: 76, height: 76, borderRadius: 22,
                   background: isDragActive ? 'rgba(61,217,235,0.15)' : 'rgba(255,255,255,0.04)',
                   border: `1px solid ${isDragActive ? '#3DD9EB' : 'rgba(255,255,255,0.1)'}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.3s',
-                  boxShadow: isDragActive ? '0 0 30px rgba(61,217,235,0.3)' : 'none',
+                  boxShadow: isDragActive ? '0 0 35px rgba(61,217,235,0.35)' : 'none',
                 }}
               >
-                <Upload size={28} style={{ color: isDragActive ? '#3DD9EB' : '#475569' }} />
+                <Upload size={30} style={{ color: isDragActive ? '#3DD9EB' : '#475569' }} />
               </motion.div>
 
               <div style={{ textAlign: 'center' }}>
                 <p style={{ fontSize: 15, fontWeight: 600, color: '#CBD5E1', marginBottom: 4 }}>
-                  Drag & drop your image here, or{' '}
-                  <span style={{ color: '#3DD9EB' }}>browse files</span>
+                  {isDragActive ? 'Release to upload' : <>Drag &amp; drop your image, or <span style={{ color: '#3DD9EB' }}>browse files</span></>}
                 </p>
                 <p style={{ fontSize: 13, color: '#475569' }}>Supports JPG, PNG, WEBP · Max 10MB</p>
               </div>
+
+              {/* Tips */}
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center', marginTop: 4 }}>
+                {['Well-lit photo', 'Close-up shot', 'Clear focus'].map(tip => (
+                  <span key={tip} style={{
+                    fontSize: 11, color: 'var(--muted)', fontWeight: 500,
+                    padding: '3px 10px', borderRadius: 6,
+                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                  }}>
+                    ✓ {tip}
+                  </span>
+                ))}
+              </div>
             </div>
           ) : (
-            /* Preview state */
             <AnimatePresence mode="wait">
               <motion.div key="preview"
                 initial={{ opacity: 0, scale: 0.96 }}
@@ -130,7 +146,7 @@ export default function UploadSection({
                 transition={{ duration: 0.4 }}
                 style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
               >
-                {/* Image preview with scan overlay */}
+                {/* Image preview */}
                 <div style={{
                   position: 'relative', borderRadius: 16, overflow: 'hidden',
                   border: '1px solid rgba(61,217,235,0.2)',
@@ -138,9 +154,15 @@ export default function UploadSection({
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   maxHeight: 300,
                 }}>
-                  <img src={previewUrl} alt="Preview"
-                    style={{ maxHeight: 300, width: 'auto', objectFit: 'contain', display: 'block' }} />
-                  {/* Scan line */}
+                  <img src={previewUrl} alt="Skin image preview"
+                    style={{
+                      maxHeight: 300, width: 'auto', objectFit: 'contain', display: 'block',
+                      filter: isLoading ? 'brightness(0.5)' : 'none',
+                      transition: 'filter 0.3s',
+                    }}
+                  />
+
+                  {/* Scan line (only when not loading) */}
                   {!isLoading && (
                     <div style={{
                       position: 'absolute', left: 0, right: 0, height: 2,
@@ -149,9 +171,20 @@ export default function UploadSection({
                       boxShadow: '0 0 12px #3DD9EB',
                     }} />
                   )}
+
+                  {/* Loading overlay */}
+                  {isLoading && (
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    }}>
+                      <Lock size={22} style={{ color: '#3DD9EB' }} />
+                      <span style={{ fontSize: 12, color: '#3DD9EB', fontWeight: 600 }}>Analyzing…</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* File info */}
+                {/* File info bar */}
                 <div style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '12px 16px', borderRadius: 12,
@@ -174,12 +207,12 @@ export default function UploadSection({
                   </div>
                   <button onClick={onRemove} disabled={isLoading}
                     style={{
-                      width: 34, height: 34, borderRadius: 8, border: 'none', cursor: 'pointer',
+                      width: 34, height: 34, borderRadius: 8, border: 'none', cursor: isLoading ? 'not-allowed' : 'pointer',
                       background: 'rgba(255,77,109,0.1)', color: '#FF4D6D',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.2s', flexShrink: 0,
+                      transition: 'all 0.2s', flexShrink: 0, opacity: isLoading ? 0.4 : 1,
                     }}
-                    onMouseEnter={e => { if (!isLoading) e.currentTarget.style.background = 'rgba(255,77,109,0.2)'; }}
+                    onMouseEnter={e => { if (!isLoading) e.currentTarget.style.background = 'rgba(255,77,109,0.22)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,77,109,0.1)'; }}
                   >
                     <Trash2 size={15} />
@@ -189,7 +222,7 @@ export default function UploadSection({
             </AnimatePresence>
           )}
 
-          {/* Loading */}
+          {/* Loading animation */}
           {isLoading && (
             <div style={{ marginTop: 20 }}>
               <LoadingAnimation isLoading={isLoading} />
