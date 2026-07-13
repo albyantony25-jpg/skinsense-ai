@@ -15,6 +15,12 @@ backend preprocesses the image → MobileNetV2 model predicts
 the disease → React frontend displays the result with 
 confidence score, description, severity, and recommendation.
 
+## ⚠️ Important: Model Limitations
+This is an **educational prototype**, not a diagnostic tool. See [model/README.md](model/README.md) for detailed performance metrics, including known limitations:
+- **Melanoma precision: 39.6%** — frequently confuses melanoma with benign moles
+- **Severely imbalanced dataset** — nevus class dominates (~6,700 samples vs. ~13 for normal skin)
+- Always consult a licensed dermatologist for real medical advice.
+
 ## 🎯 Supported Conditions
 | Disease | Severity |
 |---|---|
@@ -34,12 +40,41 @@ confidence score, description, severity, and recommendation.
 | Version Control | GitHub |
 
 ## 📁 Project Structure
+```
 skinsense-ai/
 ├── backend/     → FastAPI backend + model integration
 ├── frontend/    → React + Tailwind CSS UI
 ├── model/       → MobileNetV2 training notebooks
 ├── docs/        → Deployment documentation
 └── README.md
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+- **Backend:** Python 3.9+, pip
+- **Frontend:** Node.js 16+, npm
+- **ML Model:** TensorFlow, Keras (included in backend requirements)
+
+### Backend Setup
+```bash
+cd backend
+pip install -r requirements.txt
+python -m uvicorn main:app --reload
+```
+Backend will run on `http://localhost:8000`
+- API Docs available at `http://localhost:8000/docs`
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Frontend will run on `http://localhost:5173` (or the displayed Vite URL)
+
+### Model Training (for reference)
+See [model/README.md](model/README.md) for notebook-based training instructions.
 
 ## 👥 Team
 | Member | Role |
@@ -53,6 +88,7 @@ skinsense-ai/
 ### POST /predict
 Accepts an image file, returns prediction JSON.
 Response:
+```json
 {
   "disease": "eczema",
   "confidence": 48.02,
@@ -60,9 +96,13 @@ Response:
   "severity": "Moderate",
   "recommendation": "Use prescribed moisturizers..."
 }
+```
 
 ### GET /health
-Returns { "status": "ok" }
+Returns `{ "status": "ok" }`
+
+## 📚 Documentation
+See [docs/](docs/) for deployment guides and architecture notes.
 
 ## ⚠️ Disclaimer
 SkinSense AI is for educational purposes only. 
