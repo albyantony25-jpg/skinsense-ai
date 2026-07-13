@@ -1,16 +1,67 @@
-# React + Vite
+# SkinSense AI — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite + Tailwind CSS UI for the SkinSense AI skin disease classifier.
 
-Currently, two official plugins are available:
+## 🚀 Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+### Prerequisites
+- Node.js 16+ and npm
 
-## React Compiler
+### Installation & Development
+```bash
+npm install
+npm run dev
+```
+Frontend will start on `http://localhost:5173`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Build for Production
+```bash
+npm run build
+```
+Production-optimized files go to the `dist/` directory.
 
-## Expanding the ESLint configuration
+### Preview Production Build
+```bash
+npm run preview
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📁 Project Structure
+```
+frontend/
+├── src/
+│   ├── components/     → React components (form, results, etc.)
+│   ├── pages/          → Page views
+│   ├── App.jsx         → Main app entry
+│   ├── index.css       → Tailwind CSS imports
+│   └── main.jsx        → React entry point
+├── public/             → Static assets
+├── package.json        → Dependencies & scripts
+├── vite.config.js      → Vite configuration
+└── tailwind.config.js  → Tailwind CSS configuration
+```
+
+## 🎨 Styling
+This project uses **Tailwind CSS** for utility-first styling. Edit `src/index.css` to customize Tailwind directives or add custom styles.
+
+## 🔧 Environment Variables
+Create a `.env` file in the frontend directory:
+```env
+VITE_API_URL=http://localhost:8000
+```
+For production, update with your deployed backend URL (e.g., `https://skinsense-ai-93p9.onrender.com`).
+
+## 🌐 Deployment
+Deployed to **Vercel**. Push to `main` branch to trigger automatic deploys.
+- Live: https://skinsense-ai-eight.vercel.app
+
+## 🛠️ Stack
+- **React 18** — UI framework
+- **Vite** — Next-gen build tool
+- **Tailwind CSS** — Utility-first CSS framework
+- **HMR** — Hot Module Replacement for instant dev feedback
+
+## 📖 Additional Resources
+- [Vite Documentation](https://vitejs.dev/)
+- [React Documentation](https://react.dev/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/)
+- See main [README.md](../README.md) for full project overview
