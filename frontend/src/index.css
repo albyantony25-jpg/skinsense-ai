@@ -60,6 +60,10 @@ body {
   border-radius: 10px;
 }
 
+/* ── No-scrollbar utility ───────────────────────────────── */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* ── Glass Card ─────────────────────────────────────────── */
 .glass {
   background: var(--card);
@@ -75,8 +79,8 @@ body {
 }
 .glass-hover:hover {
   border-color: rgba(61, 217, 235, 0.3);
-  box-shadow: 0 0 40px rgba(61, 217, 235, 0.08), 0 20px 40px rgba(0, 0, 0, 0.2);
-  transform: translateY(-4px);
+  box-shadow: 0 0 40px rgba(61, 217, 235, 0.09), 0 20px 40px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px);
 }
 
 /* ── Gradient Text ──────────────────────────────────────── */
@@ -114,12 +118,21 @@ body {
   position: relative;
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 15px rgba(61, 217, 235, 0.2);
+  box-shadow: 0 4px 18px rgba(61, 217, 235, 0.22);
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(61, 217, 235, 0.35);
+  box-shadow: 0 8px 28px rgba(61, 217, 235, 0.38);
 }
+.btn-primary:hover::after { opacity: 1; }
 .btn-primary:active { transform: scale(0.97); }
 .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
 
@@ -136,7 +149,7 @@ body {
 }
 .btn-outline:hover {
   background: rgba(61, 217, 235, 0.08);
-  border-color: var(--primary);
+  border-color: rgba(61, 217, 235, 0.5);
   box-shadow: 0 0 25px rgba(61, 217, 235, 0.15);
 }
 
@@ -157,7 +170,7 @@ body {
 /* ── Badges ─────────────────────────────────────────────── */
 .badge-low      { background: rgba(34, 197, 94, 0.15);  color: var(--success); border: 1px solid rgba(34, 197, 94, 0.3); }
 .badge-moderate { background: rgba(255, 181, 71, 0.15); color: var(--warning); border: 1px solid rgba(255, 181, 71, 0.3); }
-.badge-high     { background: rgba(255, 77, 109, 0.15); color: var(--danger); border: 1px solid rgba(255, 77, 109, 0.3); }
+.badge-high     { background: rgba(255, 77, 109, 0.15); color: var(--danger);  border: 1px solid rgba(255, 77, 109, 0.3); }
 .badge-none     { background: rgba(61, 217, 235, 0.15); color: var(--primary); border: 1px solid rgba(61, 217, 235, 0.3); }
 
 /* ── Upload Zone ─────────────────────────────────────────── */
@@ -171,10 +184,10 @@ body {
 .upload-zone:hover, .upload-zone.drag-active {
   border-color: var(--primary);
   background: rgba(61, 217, 235, 0.04);
-  box-shadow: inset 0 0 30px rgba(61, 217, 235, 0.02);
+  box-shadow: inset 0 0 30px rgba(61, 217, 235, 0.03), 0 0 20px rgba(61, 217, 235, 0.08);
 }
 
-/* ── Progress ────────────────────────────────────────────── */
+/* ── Progress bars ───────────────────────────────────────── */
 .prog-track {
   height: 6px;
   background: rgba(255, 255, 255, 0.06);
@@ -198,7 +211,7 @@ html[data-theme='light'] .prog-track {
   border-radius: inherit;
 }
 
-/* ── Timeline connector ──────────────────────────────────── */
+/* ── Timeline ────────────────────────────────────────────── */
 .timeline-line {
   position: absolute;
   left: 24px;
@@ -208,7 +221,7 @@ html[data-theme='light'] .prog-track {
   background: linear-gradient(180deg, var(--primary), var(--accent), transparent);
 }
 
-/* ── Scrollbar progress bar ─────────────────────────────── */
+/* ── Scroll progress bar ─────────────────────────────────── */
 .scroll-bar {
   position: fixed;
   top: 0; left: 0;
@@ -218,16 +231,40 @@ html[data-theme='light'] .prog-track {
   z-index: 999;
 }
 
-/* ── Noise texture ───────────────────────────────────────── */
+/* ── Noise overlay ───────────────────────────────────────── */
 .noise {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.025;
+  opacity: 0.022;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 300px 300px;
+}
+
+/* ── Scroll-to-top button ────────────────────────────────── */
+.scroll-top-btn {
+  position: fixed;
+  bottom: 32px;
+  right: 28px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  box-shadow: 0 4px 20px rgba(61, 217, 235, 0.35);
+  color: #050816;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.scroll-top-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(61, 217, 235, 0.45);
 }
 
 /* ── Animations ──────────────────────────────────────────── */
@@ -253,11 +290,18 @@ html[data-theme='light'] .prog-track {
   90%  { top: 100%; opacity: 0.8; }
   100% { top: 100%; opacity: 0; }
 }
+@keyframes aurora {
+  0%   { opacity: 0.6; transform: scale(1) rotate(0deg); }
+  33%  { opacity: 0.9; transform: scale(1.05) rotate(1deg); }
+  66%  { opacity: 0.7; transform: scale(0.97) rotate(-1deg); }
+  100% { opacity: 0.6; transform: scale(1) rotate(0deg); }
+}
 
-.animate-float        { animation: float 4s ease-in-out infinite; }
-.animate-rotate       { animation: rotate360 20s linear infinite; }
-.animate-rotate-rev   { animation: rotate360 15s linear infinite reverse; }
-.animate-pulse-ring   { animation: pulseRing 2s ease-out infinite; }
+.animate-float      { animation: float 4s ease-in-out infinite; }
+.animate-rotate     { animation: rotate360 20s linear infinite; }
+.animate-rotate-rev { animation: rotate360 15s linear infinite reverse; }
+.animate-pulse-ring { animation: pulseRing 2s ease-out infinite; }
+.animate-aurora     { animation: aurora 8s ease-in-out infinite; }
 
 /* ── FAQ Accordion ───────────────────────────────────────── */
 .faq-answer {
@@ -278,11 +322,9 @@ html[data-theme='light'] .prog-track {
     box-shadow: none !important;
     color: #000000 !important;
   }
-  /* Hide non-printable items */
-  nav, footer, button, .section-tag, #upload, #faq, #features, #hero, #how, .scroll-bar, .noise, .cursor-glow {
+  nav, footer, button, .section-tag, #upload, #faq, #features, #hero, #how, .scroll-bar, .noise, .scroll-top-btn {
     display: none !important;
   }
-  /* Printable Result Container */
   .printable-report {
     display: block !important;
     max-width: 100% !important;

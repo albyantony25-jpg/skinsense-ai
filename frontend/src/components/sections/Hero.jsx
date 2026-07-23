@@ -1,44 +1,66 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Upload, ChevronDown, Zap, Target, Shield } from 'lucide-react';
+import { ArrowRight, Upload, ChevronDown, Zap, Target, Shield, Star } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
+import { animate, useInView } from 'framer-motion';
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] },
-});
+/* ── Animated number counter ── */
+function AnimatedNumber({ end, suffix = '', delay = 0 }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.5 });
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+    const timer = setTimeout(() => {
+      const controls = animate(0, end, {
+        duration: 2,
+        ease: [0.22, 1, 0.36, 1],
+        onUpdate: v => setValue(Math.round(v)),
+      });
+      return controls.stop;
+    }, delay * 1000);
+    return () => clearTimeout(timer);
+  }, [isInView, end, delay]);
+
+  return (
+    <span ref={ref} style={{ fontWeight: 900, letterSpacing: '-0.03em' }}>
+      {end >= 1000 ? value.toLocaleString() : value}{suffix}
+    </span>
+  );
+}
 
 const STATS = [
-  { value: '98%',    label: 'Accuracy',         icon: Target },
-  { value: '~2s',    label: 'Prediction Speed',  icon: Zap    },
-  { value: '5',      label: 'Disease Classes',   icon: Shield },
-  { value: '10K+',   label: 'Images Trained',    icon: Upload },
+  { value: 98,    suffix: '%',  label: 'Model Accuracy',   icon: Target },
+  { value: 2,     suffix: 's',  label: 'Prediction Speed', icon: Zap    },
+  { value: 5,     suffix: '',   label: 'Disease Classes',  icon: Shield },
+  { value: 10000, suffix: '+',  label: 'Training Images',  icon: Upload },
 ];
 
-/* ── Animated AI Medical Orb ───────────────────────────── */
+/* ── Animated AI Medical Orb ── */
 const MedicalOrb = () => (
   <div style={{ position: 'relative', width: 420, height: 420, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-    {/* Outer glow */}
+    {/* Ambient glow */}
     <div style={{
       position: 'absolute', width: '100%', height: '100%', borderRadius: '50%',
-      background: 'radial-gradient(circle, rgba(61,217,235,0.12) 0%, transparent 65%)',
+      background: 'radial-gradient(circle, rgba(61,217,235,0.10) 0%, transparent 65%)',
     }} />
 
-    {/* Outermost ring */}
+    {/* Outer dashed ring */}
     <motion.div
       animate={{ rotate: 360 }}
-      transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+      transition={{ duration: 28, repeat: Infinity, ease: 'linear' }}
       style={{
-        position: 'absolute', width: 380, height: 380, borderRadius: '50%',
+        position: 'absolute', width: 390, height: 390, borderRadius: '50%',
         border: '1px dashed rgba(61,217,235,0.15)',
       }}
     >
       {[0, 60, 120, 180, 240, 300].map(angle => (
         <div key={angle} style={{
-          position: 'absolute', width: 6, height: 6, borderRadius: '50%',
-          background: '#3DD9EB', boxShadow: '0 0 8px #3DD9EB',
+          position: 'absolute', width: 7, height: 7, borderRadius: '50%',
+          background: '#3DD9EB', boxShadow: '0 0 10px #3DD9EB',
           top: '50%', left: '50%',
-          transform: `translate(-50%, -50%) rotate(${angle}deg) translateX(189px)`,
+          transform: `translate(-50%, -50%) rotate(${angle}deg) translateX(194px)`,
         }} />
       ))}
     </motion.div>
@@ -46,18 +68,18 @@ const MedicalOrb = () => (
     {/* Middle ring */}
     <motion.div
       animate={{ rotate: -360 }}
-      transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+      transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
       style={{
-        position: 'absolute', width: 280, height: 280, borderRadius: '50%',
+        position: 'absolute', width: 290, height: 290, borderRadius: '50%',
         border: '1px solid rgba(124,92,252,0.2)',
       }}
     >
       {[0, 90, 180, 270].map(angle => (
         <div key={angle} style={{
-          position: 'absolute', width: 8, height: 8, borderRadius: '50%',
-          background: '#7C5CFC', boxShadow: '0 0 10px #7C5CFC',
+          position: 'absolute', width: 9, height: 9, borderRadius: '50%',
+          background: '#7C5CFC', boxShadow: '0 0 12px #7C5CFC',
           top: '50%', left: '50%',
-          transform: `translate(-50%, -50%) rotate(${angle}deg) translateX(139px)`,
+          transform: `translate(-50%, -50%) rotate(${angle}deg) translateX(144px)`,
         }} />
       ))}
     </motion.div>
@@ -65,31 +87,31 @@ const MedicalOrb = () => (
     {/* Inner ring */}
     <motion.div
       animate={{ rotate: 360 }}
-      transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+      transition={{ duration: 13, repeat: Infinity, ease: 'linear' }}
       style={{
-        position: 'absolute', width: 190, height: 190, borderRadius: '50%',
+        position: 'absolute', width: 196, height: 196, borderRadius: '50%',
         border: '1px solid rgba(0,255,163,0.2)',
       }}
     >
       {[0, 120, 240].map(angle => (
         <div key={angle} style={{
-          position: 'absolute', width: 6, height: 6, borderRadius: '50%',
-          background: '#00FFA3', boxShadow: '0 0 8px #00FFA3',
+          position: 'absolute', width: 7, height: 7, borderRadius: '50%',
+          background: '#00FFA3', boxShadow: '0 0 9px #00FFA3',
           top: '50%', left: '50%',
-          transform: `translate(-50%, -50%) rotate(${angle}deg) translateX(94px)`,
+          transform: `translate(-50%, -50%) rotate(${angle}deg) translateX(97px)`,
         }} />
       ))}
     </motion.div>
 
     {/* Center sphere */}
     <motion.div
-      animate={{ scale: [1, 1.05, 1] }}
-      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+      animate={{ scale: [1, 1.06, 1] }}
+      transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
       style={{
         width: 120, height: 120, borderRadius: '50%',
-        background: 'linear-gradient(135deg, rgba(61,217,235,0.3), rgba(124,92,252,0.3))',
+        background: 'linear-gradient(135deg, rgba(61,217,235,0.25), rgba(124,92,252,0.25))',
         border: '2px solid rgba(61,217,235,0.5)',
-        boxShadow: '0 0 40px rgba(61,217,235,0.3), 0 0 80px rgba(61,217,235,0.15), inset 0 0 30px rgba(61,217,235,0.1)',
+        boxShadow: '0 0 50px rgba(61,217,235,0.3), 0 0 100px rgba(61,217,235,0.12), inset 0 0 30px rgba(61,217,235,0.1)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative',
       }}
@@ -99,29 +121,28 @@ const MedicalOrb = () => (
         position: 'absolute', left: 0, right: 0, height: 2,
         background: 'linear-gradient(90deg, transparent, #3DD9EB, transparent)',
         animation: 'scanBeam 2s ease-in-out infinite',
-        boxShadow: '0 0 10px #3DD9EB',
+        boxShadow: '0 0 12px #3DD9EB',
       }} />
       <span style={{ fontSize: 36 }}>🧬</span>
     </motion.div>
 
-    {/* Floating data cards */}
+    {/* Floating data chips */}
     {[
-      { x: -155, y: -60, text: 'Melanoma', sub: '98.2%', color: '#FF4D6D' },
-      { x: 130,  y: -80, text: 'Analyzing', sub: '● Live', color: '#00FFA3' },
-      { x: -140, y: 70,  text: 'Features', sub: '128 dims', color: '#7C5CFC' },
-      { x: 120,  y: 80,  text: 'Confidence', sub: '0.94', color: '#3DD9EB' },
+      { x: -155, y: -60, text: 'Melanoma',   sub: '98.2%',    color: '#FF4D6D' },
+      { x: 130,  y: -85, text: 'Analyzing',  sub: '● Live',   color: '#00FFA3' },
+      { x: -145, y: 72,  text: 'Features',   sub: '128 dims', color: '#7C5CFC' },
+      { x: 118,  y: 78,  text: 'Confidence', sub: '0.94',     color: '#3DD9EB' },
     ].map((card, i) => (
       <motion.div key={i}
         style={{
-          position: 'absolute',
-          left: '50%', top: '50%',
+          position: 'absolute', left: '50%', top: '50%',
           transform: `translate(calc(-50% + ${card.x}px), calc(-50% + ${card.y}px))`,
-          background: 'rgba(11,17,32,0.9)',
+          background: 'rgba(11,17,32,0.92)',
           border: `1px solid ${card.color}30`,
-          borderRadius: 10, padding: '8px 12px',
-          minWidth: 100,
+          borderRadius: 10, padding: '8px 12px', minWidth: 100,
+          backdropFilter: 'blur(8px)',
         }}
-        animate={{ y: [card.y, card.y - 6, card.y] }}
+        animate={{ y: [card.y, card.y - 8, card.y] }}
         transition={{ duration: 3 + i * 0.5, repeat: Infinity, ease: 'easeInOut', delay: i * 0.4 }}
       >
         <p style={{ fontSize: 10, color: '#64748B', marginBottom: 2 }}>{card.text}</p>
@@ -131,32 +152,43 @@ const MedicalOrb = () => (
   </div>
 );
 
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 30 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] },
+});
+
 export default function Hero({ onUploadClick }) {
   return (
-    <section id="hero" style={{ minHeight: '90vh', display: 'flex', alignItems: 'center', padding: '80px 24px' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, alignItems: 'center' }}>
+    <section id="hero" style={{ minHeight: '92vh', display: 'flex', alignItems: 'center', padding: '80px 24px' }}>
+      <div className="hero-grid" style={{ maxWidth: 1200, margin: '0 auto', width: '100%' }}>
 
-        {/* Left */}
+        {/* Left content */}
         <div>
-          <motion.div {...fadeUp(0.1)} style={{ marginBottom: 24 }}>
+          <motion.div {...fadeUp(0.05)} style={{ marginBottom: 24 }}>
             <span className="section-tag">
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3DD9EB', display: 'inline-block', animation: 'pulseRing 2s ease-out infinite' }} />
-              Powered by Deep Learning
+              <span style={{
+                width: 7, height: 7, borderRadius: '50%', background: '#3DD9EB',
+                display: 'inline-block', animation: 'pulseRing 2s ease-out infinite',
+              }} />
+              Powered by Deep Learning · HAM10000 Dataset
             </span>
           </motion.div>
 
-          <motion.h1 {...fadeUp(0.2)} style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', fontWeight: 900, lineHeight: 1.1, marginBottom: 20, letterSpacing: '-0.03em' }}>
-            AI Skin Disease
-            <br />
+          <motion.h1 {...fadeUp(0.15)} style={{
+            fontSize: 'clamp(2.4rem, 5vw, 4rem)', fontWeight: 900,
+            lineHeight: 1.08, marginBottom: 20, letterSpacing: '-0.03em',
+          }}>
+            AI Skin Disease<br />
             <span className="text-grad-animated">Detection</span>
           </motion.h1>
 
-          <motion.p {...fadeUp(0.3)} style={{ fontSize: 17, color: '#94A3B8', lineHeight: 1.8, marginBottom: 36, maxWidth: 480 }}>
-            Upload a close-up image and receive AI-powered skin disease prediction with confidence score and medical insights in seconds.
+          <motion.p {...fadeUp(0.25)} style={{ fontSize: 17, color: 'var(--muted)', lineHeight: 1.8, marginBottom: 36, maxWidth: 490 }}>
+            Upload a close-up photo and receive AI-powered skin disease classification with confidence scores, risk assessment, and medical insights in under 2 seconds.
           </motion.p>
 
-          <motion.div {...fadeUp(0.4)} style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 48 }}>
-            <button onClick={onUploadClick} className="btn-primary" style={{ padding: '14px 28px', fontSize: 15 }}>
+          <motion.div {...fadeUp(0.35)} style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 32 }}>
+            <button onClick={onUploadClick} id="hero-upload-btn" className="btn-primary" style={{ padding: '14px 28px', fontSize: 15 }}>
               <Upload size={16} />
               Upload Image
               <ArrowRight size={16} />
@@ -168,13 +200,31 @@ export default function Hero({ onUploadClick }) {
             </button>
           </motion.div>
 
-          {/* Stats row */}
-          <motion.div {...fadeUp(0.55)} style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            {STATS.map(({ value, label, icon: Icon }) => (
+          {/* Social proof */}
+          <motion.div {...fadeUp(0.42)} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
+            <div style={{ display: 'flex' }}>
+              {['#3DD9EB', '#00FFA3', '#7C5CFC', '#FFB547'].map((c, i) => (
+                <div key={i} style={{
+                  width: 28, height: 28, borderRadius: '50%', border: '2px solid var(--bg)',
+                  background: c, marginLeft: i > 0 ? -8 : 0, boxShadow: `0 0 8px ${c}50`,
+                }} />
+              ))}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              {[...Array(5)].map((_, i) => <Star key={i} size={12} style={{ color: '#FFB547' }} fill="#FFB547" />)}
+            </div>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>Trusted by <strong style={{ color: 'var(--text)' }}>researchers &amp; students</strong></span>
+          </motion.div>
+
+          {/* Stats row with animated counters */}
+          <motion.div {...fadeUp(0.5)} style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
+            {STATS.map(({ value, suffix, label, icon: Icon }, i) => (
               <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Icon size={14} style={{ color: '#3DD9EB' }} />
-                  <span style={{ fontSize: 22, fontWeight: 800, color: '#fff' }}>{value}</span>
+                  <Icon size={14} style={{ color: 'var(--primary)' }} />
+                  <span style={{ fontSize: 22, color: 'var(--text)' }}>
+                    <AnimatedNumber end={value} suffix={suffix} delay={0.6 + i * 0.1} />
+                  </span>
                 </div>
                 <span style={{ fontSize: 12, color: '#64748B', fontWeight: 500 }}>{label}</span>
               </div>
@@ -182,21 +232,28 @@ export default function Hero({ onUploadClick }) {
           </motion.div>
         </div>
 
-        {/* Right */}
+        {/* Right: orb */}
         <motion.div
           initial={{ opacity: 0, x: 60 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+          className="hero-orb"
         >
           <MedicalOrb />
         </motion.div>
       </div>
 
       <style>{`
+        .hero-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 60px;
+          align-items: center;
+        }
         @media (max-width: 900px) {
-          #hero > div { grid-template-columns: 1fr !important; }
-          #hero > div > div:last-child { display: none; }
+          .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+          .hero-orb  { display: none; }
         }
       `}</style>
     </section>

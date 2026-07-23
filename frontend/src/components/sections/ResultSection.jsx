@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Info, ShieldCheck, TriangleAlert, CircleCheck, Activity, Stethoscope, Printer } from 'lucide-react';
+import { Info, ShieldCheck, TriangleAlert, CircleCheck, Activity, Stethoscope, Printer, RefreshCw } from 'lucide-react';
 import CircularProgress from '../ui/CircularProgress';
 import RiskMeter from '../ui/RiskMeter';
 import ImageComparison from '../ui/ImageComparison';
@@ -28,18 +28,19 @@ export default function ResultSection({ result, imageUrl }) {
   const displayName = DISEASE_NAMES[disease] || disease;
   const confPercent = confidence <= 1 ? confidence * 100 : confidence;
 
-  const sorted = all_probs
-    ? Object.entries(all_probs).map(([k, v]) => ({ key: k, pct: v * 100, label: DISEASE_NAMES[k] || k })).sort((a, b) => b.pct - a.pct)
-    : [];
+  // ✅ FIXED: Memoize the reference ID so it doesn't change every render
+  const refId = useMemo(() => `SS-${Math.floor(100000 + Math.random() * 900000)}`, [disease, confidence]);
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const sorted = all_probs
+    ? Object.entries(all_probs)
+        .map(([k, v]) => ({ key: k, pct: v * 100, label: DISEASE_NAMES[k] || k }))
+        .sort((a, b) => b.pct - a.pct)
+    : [];
 
   return (
     <section style={{ padding: '20px 24px 60px' }} className="printable-report">
-      <div style={{ maxWidth: 960, margin: '0 auto' }}>
-        
+      <div style={{ maxWidth: 980, margin: '0 auto' }}>
+
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: 36 }} className="no-print">
           <span className="section-tag" style={{ display: 'inline-flex', marginBottom: 16 }}>
@@ -51,7 +52,7 @@ export default function ResultSection({ result, imageUrl }) {
           </h2>
         </div>
 
-        {/* Printable Report Title (Only visible in Print) */}
+        {/* Print-only report header */}
         <div style={{ display: 'none' }} className="print-only">
           <div style={{ borderBottom: '2px solid #e2e8f0', paddingBottom: 16, marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -59,13 +60,13 @@ export default function ResultSection({ result, imageUrl }) {
               <p style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>Date: {new Date().toLocaleString()}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#0284c7' }}>Reference ID: SS-{Math.floor(100000 + Math.random() * 900000)}</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#0284c7' }}>Reference ID: {refId}</span>
             </div>
           </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 24 }} id="result-grid">
-          
+
           {/* Left Panel */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Main Result Card */}
@@ -75,7 +76,7 @@ export default function ResultSection({ result, imageUrl }) {
               transition={{ duration: 0.6, delay: 0.1 }}
               style={{ padding: 28 }}
             >
-              {/* Header */}
+              {/* Header row */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
                 <div>
                   <p style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: 6 }}>Detected Condition</p>
@@ -109,8 +110,7 @@ export default function ResultSection({ result, imageUrl }) {
               {/* Recommendation */}
               <div style={{
                 padding: '14px 16px', borderRadius: 12,
-                background: 'rgba(61,217,235,0.05)',
-                border: '1px solid rgba(61,217,235,0.2)',
+                background: 'rgba(61,217,235,0.05)', border: '1px solid rgba(61,217,235,0.2)',
                 borderLeft: '3px solid var(--primary)',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
@@ -121,22 +121,30 @@ export default function ResultSection({ result, imageUrl }) {
               </div>
             </motion.div>
 
-            {/* Print Action / Medical Action */}
+            {/* Action buttons */}
             <div style={{ display: 'flex', gap: 12 }} className="no-print">
               <button
-                onClick={handlePrint}
+                onClick={() => window.print()}
                 className="btn-outline"
-                style={{ flex: 1, padding: '14px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                style={{ flex: 1, padding: '13px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
               >
-                <Printer size={16} />
-                Print Clinical Report
+                <Printer size={15} />
+                Print Report
+              </button>
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="btn-outline"
+                style={{ flex: 1, padding: '13px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+              >
+                <RefreshCw size={15} />
+                Scan Another
               </button>
             </div>
           </div>
 
           {/* Right Panel */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Image Comparison Zoom */}
+            {/* Image */}
             {imageUrl && (
               <motion.div className="glass"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -163,7 +171,9 @@ export default function ResultSection({ result, imageUrl }) {
                   <div key={p.key}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                       <span style={{ fontSize: 12, color: p.key === disease ? 'var(--text)' : 'var(--muted)', fontWeight: p.key === disease ? 600 : 400 }}>
-                        {p.key === disease && <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: sev.color, marginRight: 6 }} />}
+                        {p.key === disease && (
+                          <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: sev.color, marginRight: 6 }} />
+                        )}
                         {p.label}
                       </span>
                       <span style={{ fontSize: 12, fontWeight: 700, color: p.key === disease ? sev.color : 'var(--muted)' }}>
@@ -175,7 +185,7 @@ export default function ResultSection({ result, imageUrl }) {
                         initial={{ width: 0 }}
                         animate={{ width: `${p.pct}%` }}
                         transition={{ duration: 1.2, delay: 0.3 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                        style={{ background: p.key === disease ? sev.bar : 'var(--border)' }}
+                        style={{ background: p.key === disease ? sev.bar : 'rgba(255,255,255,0.08)' }}
                       />
                     </div>
                   </div>
@@ -192,12 +202,12 @@ export default function ResultSection({ result, imageUrl }) {
                 style={{ padding: 24 }}
               >
                 <h4 style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
-                  Symptoms
+                  Common Symptoms
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {symptoms.map(s => (
                     <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: sev.color, flexShrink: 0 }} />
+                      <div style={{ width: 6, height: 6, borderRadius: '50%', background: sev.color, flexShrink: 0, boxShadow: `0 0 6px ${sev.color}60` }} />
                       <span style={{ fontSize: 13, color: 'var(--muted)' }}>{s}</span>
                     </div>
                   ))}
@@ -205,7 +215,7 @@ export default function ResultSection({ result, imageUrl }) {
               </motion.div>
             )}
 
-            {/* Doctor Card */}
+            {/* Doctor advice */}
             {visitDoctor !== undefined && (
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
@@ -224,7 +234,9 @@ export default function ResultSection({ result, imageUrl }) {
                     {visitDoctor ? 'Consult a Doctor' : 'Monitor at Home'}
                   </p>
                   <p style={{ fontSize: 12, color: 'var(--muted)' }}>
-                    {visitDoctor ? 'This condition requires professional medical evaluation.' : 'Monitor for changes and follow skincare routine.'}
+                    {visitDoctor
+                      ? 'This condition requires professional medical evaluation.'
+                      : 'Monitor for changes and maintain your skincare routine.'}
                   </p>
                 </div>
               </motion.div>
@@ -246,14 +258,16 @@ export default function ResultSection({ result, imageUrl }) {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {medicines.map(m => (
                 <span key={m} style={{
-                  padding: '6px 14px', borderRadius: 8, fontSize: 13,
+                  padding: '7px 14px', borderRadius: 8, fontSize: 13,
                   background: 'var(--bg)', border: '1px solid var(--border)',
                   color: 'var(--muted)',
-                }}>{m}</span>
+                }}>
+                  {m}
+                </span>
               ))}
             </div>
             <p style={{ fontSize: 11, color: '#ef4444', marginTop: 12 }}>
-              ⚠️ Disclaimer: Information provided by AI. Always consult a licensed physician before consuming any medications.
+              ⚠️ Disclaimer: Information provided by AI for educational purposes only. Always consult a licensed physician before consuming any medications.
             </p>
           </motion.div>
         )}
@@ -265,6 +279,7 @@ export default function ResultSection({ result, imageUrl }) {
         }
         @media print {
           .print-only { display: block !important; }
+          .no-print { display: none !important; }
           #result-grid { grid-template-columns: 1fr !important; }
           .glass {
             background: #ffffff !important;

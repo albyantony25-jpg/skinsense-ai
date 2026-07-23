@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import { motion, useScroll, useSpring } from 'framer-motion';
+import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
+import { ArrowUp } from 'lucide-react';
 
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -69,42 +70,56 @@ const DISEASE_DETAILS = {
   },
 };
 
-export default function App() {
-  const [selectedFile, setSelectedFile]  = useState(null);
-  const [previewUrl,   setPreviewUrl]    = useState(null);
-  const [isLoading,    setIsLoading]     = useState(false);
-  const [result,       setResult]        = useState(null);
-  const [isDemoMode,   setIsDemoMode]    = useState(false);
+/* ── Toast styles ── */
+const TOAST_STYLE = {
+  background: 'rgba(11,17,32,0.95)',
+  color: '#fff',
+  border: '1px solid rgba(61,217,235,0.2)',
+  borderRadius: '12px',
+  fontSize: '14px',
+  fontWeight: '500',
+  backdropFilter: 'blur(16px)',
+  boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+};
 
-  // Upgrade Level 2 States
+export default function App() {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl,   setPreviewUrl]   = useState(null);
+  const [isLoading,    setIsLoading]    = useState(false);
+  const [result,       setResult]       = useState(null);
+  const [isDemoMode,   setIsDemoMode]   = useState(false);
+
   const [theme, setTheme] = useState(() => localStorage.getItem('skinsense_theme') || 'dark');
   const [scanHistory, setScanHistory] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('skinsense_history')) || [];
-    } catch {
-      return [];
-    }
+    try { return JSON.parse(localStorage.getItem('skinsense_history')) || []; }
+    catch { return []; }
   });
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
-  const resultRef  = useRef(null);
-  const uploadRef  = useRef(null);
+  const resultRef = useRef(null);
+  const uploadRef = useRef(null);
 
   /* Scroll progress bar */
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
-  /* Set HTML attributes on theme change */
+  /* Theme */
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('skinsense_theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(t => t === 'dark' ? 'light' : 'dark');
-  };
+  /* Scroll-to-top button visibility */
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-  /* ── Handlers ───────────────────── */
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
+
+  /* ── Handlers ── */
   const handleFileSelect = (file) => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setSelectedFile(file);
@@ -126,7 +141,13 @@ export default function App() {
       id: Date.now(),
       timestamp: new Date().toISOString(),
       disease,
-      diseaseName: DISEASE_DETAILS[disease] ? (disease === 'melanoma' ? 'Melanoma' : disease === 'nevus' ? 'Nevus (Benign Mole)' : disease === 'bcc' ? 'Basal Cell Carcinoma' : disease === 'eczema' ? 'Eczema' : 'Normal Skin') : disease,
+      diseaseName: DISEASE_DETAILS[disease]
+        ? (disease === 'melanoma' ? 'Melanoma'
+          : disease === 'nevus'  ? 'Nevus (Benign Mole)'
+          : disease === 'bcc'    ? 'Basal Cell Carcinoma'
+          : disease === 'eczema' ? 'Eczema'
+          : 'Normal Skin')
+        : disease,
       confidence,
       severity,
     };
@@ -138,28 +159,23 @@ export default function App() {
   const clearHistory = () => {
     setScanHistory([]);
     localStorage.setItem('skinsense_history', JSON.stringify([]));
-    toast.success('History cleared');
+    toast.success('History cleared', { style: TOAST_STYLE });
   };
 
   const deleteRecord = (id) => {
     const updated = scanHistory.filter(h => h.id !== id);
     setScanHistory(updated);
     localStorage.setItem('skinsense_history', JSON.stringify(updated));
-    toast.success('Record removed');
+    toast.success('Record removed', { style: TOAST_STYLE });
   };
 
   const handleSelectRecord = (record) => {
     const details = DISEASE_DETAILS[record.disease] || DISEASE_DETAILS.normal;
-    // Reconstruct all_probs with the selected disease as high score
     const probs = {};
     Object.keys(DISEASE_DETAILS).forEach(k => {
       probs[k] = k === record.disease ? record.confidence : (1 - record.confidence) / 4;
     });
-    setResult({
-      ...details,
-      confidence: record.confidence,
-      all_probs: probs
-    });
+    setResult({ ...details, confidence: record.confidence, all_probs: probs });
   };
 
   const generateMockResult = () => {
@@ -198,32 +214,29 @@ export default function App() {
       if (!res.ok) throw new Error('API error');
       const data = await res.json();
       if (data?.disease && data.confidence !== undefined) {
-        /* Merge rich details */
         const enriched = { ...DISEASE_DETAILS[data.disease], ...data };
         setResult(enriched);
-        toast.success('Analysis complete!', { style: { background: 'var(--bg2)', color: 'var(--text)', border: '1px solid rgba(61,217,235,0.3)' } });
-        
-        // Save scan to history
+        toast.success('✅ Analysis complete!', { style: TOAST_STYLE });
         saveScanToHistory(data.disease, data.confidence, enriched.severity);
       } else {
         throw new Error('Malformed response');
       }
     } catch (err) {
       console.warn('API failed, using mock:', err);
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 2200));
       const mockResult = generateMockResult();
       setResult(mockResult);
       setIsDemoMode(true);
-      toast('Demo mode — backend offline', { icon: '⚡', style: { background: 'var(--bg2)', color: '#FFB547', border: '1px solid rgba(255,181,71,0.3)' } });
-      
-      // Save scan to history
+      toast('⚡ Demo mode — backend offline', {
+        style: { ...TOAST_STYLE, border: '1px solid rgba(255,181,71,0.3)', color: '#FFB547' },
+      });
       saveScanToHistory(mockResult.disease, mockResult.confidence, mockResult.severity);
     } finally {
       setIsLoading(false);
     }
   };
 
-  /* Scroll to result when ready */
+  /* Scroll to result */
   useEffect(() => {
     if (result && resultRef.current) {
       setTimeout(() => resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
@@ -234,17 +247,26 @@ export default function App() {
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh', background: 'var(--bg)' }}>
-      {/* Background elements */}
+      {/* Background */}
       <ParticleBackground />
       <div className="noise" />
 
       {/* Scroll progress */}
-      <motion.div className="scroll-bar" style={{ scaleX, height: '3px', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 999 }} />
+      <motion.div
+        className="scroll-bar"
+        style={{ scaleX, height: '3px', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 999 }}
+      />
 
-      {/* Toast */}
-      <Toaster position="top-right" />
+      {/* Toast notifications */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: TOAST_STYLE,
+        }}
+      />
 
-      {/* Slide-out Scan History */}
+      {/* Scan history drawer */}
       <ScanHistory
         isOpen={isHistoryOpen}
         onClose={() => setIsHistoryOpen(false)}
@@ -254,7 +276,25 @@ export default function App() {
         onDeleteRecord={deleteRecord}
       />
 
-      {/* Layout wrapper */}
+      {/* Scroll-to-top button */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            transition={{ duration: 0.3 }}
+            className="scroll-top-btn"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            title="Scroll to top"
+            id="scroll-top-btn"
+          >
+            <ArrowUp size={20} />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Main content */}
       <div style={{ position: 'relative', zIndex: 2 }}>
         <Navbar
           onUploadClick={scrollToUpload}
