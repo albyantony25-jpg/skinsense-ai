@@ -65,14 +65,7 @@ export default function Navbar({ onUploadClick, theme, toggleTheme, onHistoryCli
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 20px rgba(61,217,235,0.4)',
-          }}>
-            <Activity size={18} color="#050816" />
-          </div>
+          <img src="/logo.png" alt="SkinSense AI Logo" style={{ width: 36, height: 36, borderRadius: 10, boxShadow: '0 0 20px rgba(61,217,235,0.4)', objectFit: 'cover' }} />
           <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--text)' }}>
             <span>Skin</span>
             <span className="text-grad">Sense</span>
