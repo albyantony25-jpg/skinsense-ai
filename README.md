@@ -2,7 +2,7 @@
 > AI-powered skin disease classifier built as a KTU final year group project.
 
 ## 🚀 Live Demo
-- **Frontend:** https://skinsense-ai-eight.vercel.app
+- **Frontend:** skinsense-ai-seven.vercel.app
 - **Backend API:** https://skinsense-ai-93p9.onrender.com
 - **API Docs:** https://skinsense-ai-93p9.onrender.com/docs
 
